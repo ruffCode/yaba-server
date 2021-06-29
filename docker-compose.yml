@@ -1,0 +1,68 @@
+version: '3.6'
+
+
+networks:
+  pg:
+    name: pg
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.222.0/24
+
+
+services:
+  postgresql:
+    image: docker.io/bitnami/postgresql:13
+    container_name: postgres
+    volumes:
+      - postgresql_data:/bitnami/postgresql
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-998}
+      TZ: ${TZ:-America/New_York}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-yaba}
+      POSTGRES_USER: ${POSTGRES_USER:-yaba}
+      APP_SECRET: ${APP_SECRET}
+    restart: always
+    logging:
+      options:
+        max-size: "50m"
+    networks:
+      pg:
+        ipv4_address: 192.168.222.251
+    ports:
+      - "5435:5432"
+    security_opt:
+      - no-new-privileges:true
+  yaba-server:
+    container_name: yabaServer
+    image: yaba-server:0.0.7-SNAPSHOT
+    network_mode: host
+    security_opt:
+      - no-new-privileges:true
+    restart: always
+    environment:
+      TZ: ${TZ}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      PLAID_CLIENT_ID: ${PLAID_CLIENT_ID}
+      PLAID_SECRET: ${PLAID_SECRET}
+      PLAID_BASE_URL: ${PLAID_BASE_URL}
+      WEBHOOK_URL: ${WEBHOOK_URL}
+      APP_SECRET: ${APP_SECRET}
+    logging:
+      options:
+        max-size: "50m"
+
+volumes:
+  postgresql_data:
+    driver: local
+
+#networks:
+#  pg:
+#    external: true

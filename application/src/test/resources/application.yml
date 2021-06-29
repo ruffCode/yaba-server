@@ -1,0 +1,34 @@
+spring:
+  r2dbc:
+    username: ${db.username}
+    password: ${db.password}
+    url: r2dbc:${db.url}
+    pool:
+      initial-size: 2
+      max-size: 25
+      max-life-time: 5
+  profiles:
+    active: test
+db:
+  username: yaba
+  password: yaba
+  url: tc:postgresql://localhost:5432/yaba?TC_IMAGE_TAG=13.1
+plaid:
+  client-id: ${PLAID_CLIENT_ID}
+  secret: ${PLAID_SECRET}
+  base-url: https://sandbox.plaid.com
+  hook-url: ${WEBHOOK_URL}
+app:
+  secret: thisissupersecret
+  refresh: letsrefresh
+graphql:
+  packages:
+    - "tech.alexib.yaba.server"
+    - "tech.alexib.yaba.domain"
+  subscriptions:
+    # Send a ka message every 1000 ms (1 second)
+    keepAliveInterval: 1000
+  playground:
+    enabled: true
+service-account:
+  path: sa1.json

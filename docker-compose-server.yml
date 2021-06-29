@@ -1,0 +1,47 @@
+version: '3.6'
+
+
+#networks:
+#  pg:
+#    name: pg
+#    driver: bridge
+#    ipam:
+#      config:
+#        - subnet: 192.168.222.0/24
+
+
+services:
+  yaba-server:
+    container_name: yabaServerOnly
+    image: openjdk:16
+    network_mode: host
+    security_opt:
+      - no-new-privileges:true
+    restart: always
+    ports:
+      - 9050:9050
+    environment:
+      TZ: ${TZ}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      PLAID_CLIENT_ID: ${PLAID_CLIENT_ID}
+      PLAID_SECRET: ${PLAID_SECRET}
+      PLAID_BASE_URL: ${PLAID_BASE_URL}
+      WEBHOOK_URL: ${WEBHOOK_URL}
+      APP_SECRET: ${APP_SECRET}
+    volumes:
+      - "./application/build/libs/application-0.0.7-SNAPSHOT.jar:/app.jar"
+    command: [ 'java', '-jar', '/app.jar' ]
+    logging:
+      options:
+        max-size: "50m"
+  ngrok:
+    container_name: ngrok
+    build: ./ngrok
+    network_mode: host
+    image: yaba-ngrok:1.0.0
+    command: [ "ngrok", "start","yaba" ]
+    ports:
+      - 4040:4040

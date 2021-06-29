@@ -1,0 +1,54 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  r2dbc:
+    url: r2dbc:${db.url}
+    username: ${db.username}
+    password: ${db.password}
+    pool:
+      initial-size: 2
+      max-size: 25
+      max-life-time: 5
+  application:
+    name: YABA
+
+#  profiles:
+#    active: test
+db:
+  username: ${POSTGRES_USER:yaba}
+  password: ${POSTGRES_PASSWORD:yaba}
+  url: postgresql://${POSTGRES_HOST}:${POSTGRES_PORT:5432}/${POSTGRES_DB}
+server:
+  port: ${SERVER_PORT:9050}
+
+plaid:
+  client-id: ${PLAID_CLIENT_ID}
+  secret: ${PLAID_SECRET}
+  base-url: ${PLAID_BASE_URL}
+  hook-url: ${WEBHOOK_URL}
+
+app:
+  secret: ${APP_SECRET}
+  refresh: letsrefresh
+graphql:
+  packages:
+    - "tech.alexib.yaba.server"
+    - "tech.alexib.yaba.domain"
+  subscriptions:
+    # Send a ka message every 1000 ms (1 second)
+    keepAliveInterval: 1000
+  playground:
+    enabled: true
+
+service-account:
+  path: sa1.json
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+service-account:
+  path: sa.json
