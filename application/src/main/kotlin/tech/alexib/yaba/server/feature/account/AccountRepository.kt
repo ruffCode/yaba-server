@@ -21,6 +21,7 @@ import org.springframework.data.relational.core.query.Query.query
 import org.springframework.r2dbc.BadSqlGrammarException
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.await
+import org.springframework.r2dbc.core.awaitSingle
 import org.springframework.r2dbc.core.bind
 import org.springframework.r2dbc.core.flow
 import org.springframework.stereotype.Repository
@@ -40,6 +41,8 @@ interface AccountRepository {
     suspend fun findByIds(ids: List<UUID>): List<AccountEntity>
     suspend fun setHidden(plaidAccountId: String, hide: Boolean)
     suspend fun deleteByItemId(itemId: ItemId)
+    suspend fun setHidden(id: UUID, hide: Boolean)
+    suspend fun findById(id: UUID): AccountEntity
 }
 
 private val logger = KotlinLogging.logger { }
@@ -156,12 +159,28 @@ class AccountRepositoryImpl(
         ).bind("hide", hide).bind("id", plaidAccountId).await()
     }
 
+    override suspend fun setHidden(id: UUID, hide: Boolean) {
+        client.sql(
+            """
+          update accounts_table set hidden = :hide where id = :id
+      """.trimIndent()
+        ).bind("hide", hide).bind("id", id).await()
+    }
+
     override suspend fun deleteByItemId(itemId: ItemId) {
         client.sql(
             """
             delete from accounts_table where item_id = :itemId
         """.trimIndent()
         ).bind("itemId", itemId.value).await()
+    }
+
+    override suspend fun findById(id: UUID): AccountEntity {
+        return client.sql(
+            """
+              select from accounts where id = :id
+          """.trimIndent()
+        ).bind("id", id).map { row -> r2dbcConverter.read(AccountEntity::class.java, row) }.awaitSingle()
     }
 }
 

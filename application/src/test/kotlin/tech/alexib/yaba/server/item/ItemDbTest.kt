@@ -17,6 +17,7 @@ import org.springframework.r2dbc.core.await
 import tech.alexib.yaba.domain.institution.InstitutionId
 import tech.alexib.yaba.domain.item.ItemId
 import tech.alexib.yaba.domain.item.PlaidAccessToken
+import tech.alexib.yaba.domain.item.itemId
 import tech.alexib.yaba.server.assertIsError
 import tech.alexib.yaba.server.assertIsOk
 import tech.alexib.yaba.server.config.BaseIntegrationTest
@@ -123,7 +124,7 @@ class ItemDbTest : BaseIntegrationTest() {
     @Test
     fun `unlinked count is incremented`() {
         runBlocking {
-            itemRepository.unlink(InstitutionId(itemStub.institutionId), usersStub.first().id)
+            itemRepository.unlink(itemStub.id.itemId(), usersStub.first().id)
 
             val updated2 = itemRepository.relink(
                 InstitutionId(itemStub.institutionId),
@@ -132,7 +133,7 @@ class ItemDbTest : BaseIntegrationTest() {
             )
             Assertions.assertEquals(1, updated2.timesUnlinked)
             Assertions.assertTrue(updated2.linked)
-            itemRepository.unlink(InstitutionId(itemStub.institutionId), usersStub.first().id)
+            itemRepository.unlink(itemStub.id.itemId(), usersStub.first().id)
 
         }
     }

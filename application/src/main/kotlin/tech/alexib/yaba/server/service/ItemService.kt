@@ -9,6 +9,7 @@ import tech.alexib.plaid.client.model.PlaidError
 import tech.alexib.yaba.domain.institution.InstitutionId
 import tech.alexib.yaba.domain.item.Item
 import tech.alexib.yaba.domain.item.ItemCreateError
+import tech.alexib.yaba.domain.item.ItemId
 import tech.alexib.yaba.domain.item.LinkItemRequest
 import tech.alexib.yaba.domain.item.PlaidAccessToken
 import tech.alexib.yaba.domain.item.PlaidApiError
@@ -16,7 +17,6 @@ import tech.alexib.yaba.domain.item.PlaidItemId
 import tech.alexib.yaba.domain.item.PublicToken
 import tech.alexib.yaba.domain.item.PublicTokenExchangeResponse
 import tech.alexib.yaba.domain.item.create
-import tech.alexib.yaba.domain.item.itemId
 import tech.alexib.yaba.domain.item.validate
 import tech.alexib.yaba.domain.user.UserId
 import tech.alexib.yaba.server.feature.account.AccountRepository
@@ -27,7 +27,7 @@ import tech.alexib.yaba.server.plaid.PlaidService
 
 interface ItemService {
     suspend fun linkItem(linkItemRequest: LinkItemRequest): Either<ItemCreateError, Item>
-    suspend fun unlinkItem(institutionId: InstitutionId, userId: UserId)
+    suspend fun unlinkItem(itemId: ItemId, userId: UserId)
 }
 
 private val logger = KotlinLogging.logger {}
@@ -49,7 +49,7 @@ class ItemServiceImpl(
         ) {
             it.validate(
                 getItemByInstitutionIdWithTimesUnlinked = ::getItemByInstitutionIdWithTimesUnlinked,
-                )
+            )
         }
         institutionService.getOrCreate(linkItemRequest.institutionId).mapLeft {
             logger.error { it }
@@ -57,12 +57,11 @@ class ItemServiceImpl(
         return createResult
     }
 
-    override suspend fun unlinkItem(institutionId: InstitutionId, userId: UserId) {
+    override suspend fun unlinkItem(itemId: ItemId, userId: UserId) {
 
-        itemRepository.unlink(institutionId, userId)
+        itemRepository.unlink(itemId, userId)
 
-        itemRepository.findByInstitutionId(institutionId.value, userId).map { itemEntity ->
-            val itemId = itemEntity.id.itemId()
+        itemRepository.findById(itemId).map { itemEntity ->
             transactionRepository.deleteTransactions(itemId)
             accountRepository.deleteByItemId(itemId)
             plaidService.removeItem(itemEntity.accessToken)

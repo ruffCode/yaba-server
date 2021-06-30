@@ -1,4 +1,4 @@
-package tech.alexib.yaba.server.graphql.mutation
+package tech.alexib.yaba.server.feature.item
 
 import com.expediagroup.graphql.server.operations.Mutation
 import org.springframework.stereotype.Component
@@ -8,16 +8,13 @@ import tech.alexib.yaba.domain.item.ItemId
 import tech.alexib.yaba.domain.item.itemId
 import tech.alexib.yaba.server.feature.account.AccountEntity
 import tech.alexib.yaba.server.feature.account.AccountRepository
-import tech.alexib.yaba.server.feature.item.ItemDto
-import tech.alexib.yaba.server.feature.item.ItemEntity
-import tech.alexib.yaba.server.feature.item.ItemRepository
 import tech.alexib.yaba.server.graphql.context.YabaGraphQLContext
 import tech.alexib.yaba.server.graphql.directive.Authenticated
 import tech.alexib.yaba.server.plaid.PlaidService
 import tech.alexib.yaba.server.service.InstitutionService
+import tech.alexib.yaba.server.service.ItemService
 import tech.alexib.yaba.server.service.TransactionService
 import tech.alexib.yaba.server.util.YabaException
-import tech.alexib.yaba.server.util.notFound
 import tech.alexib.yaba.server.util.toGraphql
 import java.util.UUID
 
@@ -27,7 +24,8 @@ class ItemMutation(
     private val plaidService: PlaidService,
     private val accountRepository: AccountRepository,
     private val institutionService: InstitutionService,
-    private val transactionService: TransactionService
+    private val transactionService: TransactionService,
+    private val itemService: ItemService
 ) : Mutation {
 
     @Authenticated
@@ -108,14 +106,16 @@ class ItemMutation(
     }
 
     @Authenticated
-    suspend fun itemDelete(itemId: UUID): Boolean {
-        itemRepository.findById(itemId.itemId()).fold({
-            notFound("Item not found for id $itemId")
-        }, {
-            plaidService.removeItem(it.accessToken)
-        })
+    suspend fun itemUnlink(context: YabaGraphQLContext, itemId: UUID): Boolean {
+        itemService.unlinkItem(itemId.itemId(), context.id())
 
-        itemRepository.delete(itemId)
+//        itemRepository.findById(itemId.itemId()).fold({
+//            notFound("Item not found for id $itemId")
+//        }, {
+//            plaidService.removeItem(it.accessToken)
+//        })
+//
+//        itemRepository.delete(itemId)
         return true
     }
 

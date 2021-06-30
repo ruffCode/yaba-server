@@ -44,7 +44,7 @@ interface ItemRepository {
     suspend fun delete(id: UUID)
     suspend fun findByIds(ids: List<UUID>): List<ItemEntity>
     fun findAll(): Flow<ItemEntity>
-    suspend fun unlink(institutionId: InstitutionId, userId: UserId)
+    suspend fun unlink(itemId: ItemId, userId: UserId)
     suspend fun relink(institutionId: InstitutionId, userId: UserId, plaidAccessToken: PlaidAccessToken): ItemEntity
 
 }
@@ -141,12 +141,12 @@ class ItemRepositoryImpl(
         ).map(::mapEntity).flow()
     }
 
-    override suspend fun unlink(institutionId: InstitutionId, userId: UserId) {
+    override suspend fun unlink(itemId: ItemId, userId: UserId) {
         client.sql(
             """
-           update items_table set linked = false where plaid_institution_id = :institutionId and user_id = :userId
+           update items_table set linked = false where id = :itemId and user_id = :userId
        """.trimIndent()
-        ).bind("institutionId", institutionId.value).bind("userId", userId.value).await()
+        ).bind("itemId", itemId.value).bind("userId", userId.value).await()
     }
 
     override suspend fun relink(
