@@ -6,7 +6,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import mu.KotlinLogging
 import org.springframework.stereotype.Component
+import tech.alexib.yaba.domain.item.ItemId
 import tech.alexib.yaba.domain.user.UserId
+import tech.alexib.yaba.server.feature.item.ItemDto
 import tech.alexib.yaba.server.feature.user.UserDto
 
 import tech.alexib.yaba.server.graphql.util.CoroutineDataLoader
@@ -21,6 +23,7 @@ class AccountDataLoader(private val repository: AccountRepository) : CoroutineDa
     companion object {
         const val name = "AccountDataLoader"
     }
+
     override suspend fun batchLoad(keys: List<UUID>): List<AccountDto> {
         logger.info { "$name called with $keys" }
         return repository.findByIds(keys).map { it.toDto() }
@@ -37,6 +40,14 @@ class AccountsByUserIdDataLoader(
     }
 }
 
+@Component
+class AccountsByItemIdDataLoader(
+    private val accountRepository: AccountRepository
+) : CoroutineDataLoader<UUID, List<AccountDto>>() {
+    override suspend fun batchLoad(keys: List<UUID>): List<List<AccountDto>> {
+        return keys.map { uuid -> accountRepository.findByItemId(ItemId(uuid)).map { it.toDto() }.toList() }
+    }
+}
 
 @Component
 class AccountsByUserIdDataFetcher : DataFetcher<CompletableFuture<List<AccountDto>>> {
@@ -46,3 +57,11 @@ class AccountsByUserIdDataFetcher : DataFetcher<CompletableFuture<List<AccountDt
     }
 }
 
+@Component
+class AccountsByItemIdDataFetcher : DataFetcher<CompletableFuture<List<AccountDto>>> {
+
+    override fun get(environment: DataFetchingEnvironment): CompletableFuture<List<AccountDto>> {
+        val itemId = environment.getSource<ItemDto>().id
+        return environment.getValueFromDataLoader(AccountsByItemIdDataLoader::class, itemId)
+    }
+}

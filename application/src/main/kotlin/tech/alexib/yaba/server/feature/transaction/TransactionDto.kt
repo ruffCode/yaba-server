@@ -1,4 +1,5 @@
 @file:UseSerializers(UUIDSerializer::class, JavaLocalDateSerializer::class)
+
 package tech.alexib.yaba.server.feature.transaction
 
 import com.expediagroup.graphql.generator.annotations.GraphQLName
@@ -25,4 +26,5 @@ data class TransactionDto(
     val date: LocalDate,
     val pending: Boolean,
     val id: UUID,
+    val merchantName: String? = null
 )

@@ -10,13 +10,14 @@ private val logger = KotlinLogging.logger {}
 
 @Component
 class AccountMutation(
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
 ) : Mutation {
 
     @Authenticated
     suspend fun setAccountHidden(input: SetAccountHiddenInput): Boolean {
         return runCatching {
             accountRepository.setHidden(input.accountId, input.hide)
+
             true
         }.getOrElse {
             logger.error {

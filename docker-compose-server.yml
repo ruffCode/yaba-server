@@ -32,7 +32,7 @@ services:
       WEBHOOK_URL: ${WEBHOOK_URL}
       APP_SECRET: ${APP_SECRET}
     volumes:
-      - "./application/build/libs/application-0.0.7-SNAPSHOT.jar:/app.jar"
+      - "./application/build/libs/application-0.1.1-SNAPSHOT.jar:/app.jar"
     command: [ 'java', '-jar', '/app.jar' ]
     logging:
       options:

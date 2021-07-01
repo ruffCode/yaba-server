@@ -126,7 +126,7 @@ class AccountRepositoryImpl(
     override suspend fun findByItemId(itemId: ItemId): Flow<AccountEntity> {
         return client.sql(
             """
-            select *  from accounts where item_id = :itemId and hidden = false
+            select *  from accounts where item_id = :itemId 
         """.trimIndent()
         ).bind("itemId", itemId.value).map { row -> r2dbcConverter.read(AccountEntity::class.java, row) }
             .all().asFlow()
@@ -136,7 +136,7 @@ class AccountRepositoryImpl(
 
         return client.sql(
             """
-            select *  from accounts where user_id = :userId and hidden = false
+            select *  from accounts where user_id = :userId 
         """.trimIndent()
         ).bind("userId", userId.value).map { row -> r2dbcConverter.read(AccountEntity::class.java, row) }
             .all().asFlow()
@@ -178,7 +178,7 @@ class AccountRepositoryImpl(
     override suspend fun findById(id: UUID): AccountEntity {
         return client.sql(
             """
-              select from accounts where id = :id
+              select * from accounts where id = :id
           """.trimIndent()
         ).bind("id", id).map { row -> r2dbcConverter.read(AccountEntity::class.java, row) }.awaitSingle()
     }

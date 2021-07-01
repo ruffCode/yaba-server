@@ -36,9 +36,9 @@ class AuthMutation(
             when (it) {
                 is YabaException -> {
                     logger.info { "yaba error  ${it.message} " }
-                    throw GraphqlErrorException.newErrorException().message("yaba reg error").build()
+                    throw GraphqlErrorException.newErrorException().message(it.localizedMessage).build()
                 }
-                else -> throw GraphqlErrorException.newErrorException().message("reg error ${it.localizedMessage}")
+                else -> throw GraphqlErrorException.newErrorException().message(it.localizedMessage)
                     .build()
             }
         }

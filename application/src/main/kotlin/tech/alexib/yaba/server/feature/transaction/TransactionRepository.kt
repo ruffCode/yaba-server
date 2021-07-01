@@ -66,6 +66,7 @@ class TransactionRepositoryImpl(
     }
 
     override fun findByAccountId(accountId: AccountId): Flow<TransactionEntity> {
+
         return client.sql(
             """
           SELECT * FROM transactions WHERE account_id = :id ORDER BY date DESC

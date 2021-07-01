@@ -45,6 +45,8 @@ data class TransactionEntity(
     val updatedAt: OffsetDateTime = OffsetDateTime.now(),
     @Id
     val id: UUID? = null,
+    @Column("merchant_name")
+    val merchantName: String? = null,
 ) {
     fun toDto() = TransactionDto(
         id = id!!,
@@ -60,6 +62,7 @@ data class TransactionEntity(
         unofficialCurrencyCode = unofficialCurrencyCode,
         date = date,
         pending = pending,
+        merchantName = merchantName
     )
 }
 

@@ -8,14 +8,15 @@ import org.springframework.beans.factory.BeanFactory
 import org.springframework.beans.factory.BeanFactoryAware
 import org.springframework.beans.factory.getBean
 import tech.alexib.yaba.server.feature.account.AccountDto
-import tech.alexib.yaba.server.feature.item.ItemDto
-import tech.alexib.yaba.server.feature.user.UserDto
+import tech.alexib.yaba.server.feature.account.AccountsByItemIdDataFetcher
 import tech.alexib.yaba.server.feature.account.AccountsByUserIdDataFetcher
+import tech.alexib.yaba.server.feature.item.ItemDto
 import tech.alexib.yaba.server.feature.item.ItemsByItemIdDataFetcher
 import tech.alexib.yaba.server.feature.item.ItemsByUserIdDataFetcher
 import tech.alexib.yaba.server.feature.transaction.TransactionByItemIdDataFetcher
 import tech.alexib.yaba.server.feature.transaction.TransactionsByAccountIdDataFetcher
 import tech.alexib.yaba.server.feature.transaction.TransactionsByUserIdDataFetcher
+import tech.alexib.yaba.server.feature.user.UserDto
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
@@ -47,6 +48,9 @@ class CustomKotlinDataFetcherFactoryProvider(
             }
             ItemDto::transactions -> DataFetcherFactory {
                 beanFactory.getBean<TransactionByItemIdDataFetcher>() as DataFetcher<Any>
+            }
+            ItemDto::accounts -> DataFetcherFactory {
+                beanFactory.getBean<AccountsByItemIdDataFetcher>() as DataFetcher<Any>
             }
             AccountDto::transactions -> DataFetcherFactory {
                 beanFactory.getBean<TransactionsByAccountIdDataFetcher>() as DataFetcher<Any>

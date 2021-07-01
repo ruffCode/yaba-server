@@ -1,5 +1,6 @@
 package tech.alexib.yaba.server.feature.transaction
 
+
 import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.flow.map
@@ -8,11 +9,9 @@ import org.springframework.stereotype.Component
 import tech.alexib.yaba.domain.item.ItemId
 import tech.alexib.yaba.domain.user.UserId
 import tech.alexib.yaba.server.feature.account.AccountDto
+import tech.alexib.yaba.server.feature.account.AccountId
 import tech.alexib.yaba.server.feature.item.ItemDto
 import tech.alexib.yaba.server.feature.user.UserDto
-import tech.alexib.yaba.server.feature.account.AccountId
-
-
 import tech.alexib.yaba.server.graphql.util.CoroutineDataLoader
 import tech.alexib.yaba.server.graphql.util.getValueFromDataLoader
 import java.util.UUID
@@ -64,7 +63,11 @@ class TransactionsByUserIdDataFetcher : DataFetcher<CompletableFuture<List<Trans
 class TransactionsByAccountIdDataFetcher : DataFetcher<CompletableFuture<List<TransactionDto>>> {
     override fun get(environment: DataFetchingEnvironment): CompletableFuture<List<TransactionDto>> {
         val accountId = environment.getSource<AccountDto>().id
-        return environment.getValueFromDataLoader(TransactionsByAccountIdDataLoader::class, accountId)
+        val hidden = environment.getSource<AccountDto>().hidden
+        return environment.getValueFromDataLoader(
+            TransactionsByAccountIdDataLoader::class,
+            if (!hidden) accountId else UUID.randomUUID()
+        )
     }
 }
 

@@ -5,6 +5,7 @@ import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import tech.alexib.yaba.domain.user.UserId
 import tech.alexib.yaba.server.dto.InstitutionDto
+import tech.alexib.yaba.server.feature.account.AccountDto
 import tech.alexib.yaba.server.feature.transaction.TransactionDto
 
 import java.util.UUID
@@ -25,5 +26,9 @@ data class ItemDto(
     @kotlin.jvm.Transient
     @kotlinx.serialization.Transient
     lateinit var transactions: List<TransactionDto>
+
+    @kotlin.jvm.Transient
+    @kotlinx.serialization.Transient
+    lateinit var accounts: List<AccountDto>
 
 }

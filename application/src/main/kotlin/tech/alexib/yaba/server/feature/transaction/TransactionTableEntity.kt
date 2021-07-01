@@ -38,6 +38,8 @@ data class TransactionTableEntity(
     @LastModifiedDate
     @Column("updated_at")
     val updatedAt: OffsetDateTime = OffsetDateTime.now(),
+    @Column("merchant_name")
+    val merchantName: String? = null,
     @Id
     val id: UUID? = null,
 ) {
@@ -46,7 +48,7 @@ data class TransactionTableEntity(
             accountId = accountId.value,
             plaidTransactionId = transaction.transactionId,
             plaidCategoryId = transaction.categoryId,
-
+            merchantName = transaction.merchantName,
             category = transaction.category?.firstOrNull(),
             subcategory = transaction.category?.drop(1)?.firstOrNull(),
             type = transaction.transactionType?.name ?: "",
