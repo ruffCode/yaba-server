@@ -1,9 +1,6 @@
 drop view users;
 
 alter table users_table
-    rename username to email;
-
-alter table users_table
     add column if not exists verified bool not null default true;
 
 alter table users_table

@@ -27,6 +27,7 @@ class FlywayConfig(
         val password = env.getRequiredProperty("db.password")
         val config = Flyway
             .configure()
+            .baselineOnMigrate(true)
             .dataSource(url, user, password)
         return Flyway(config)
     }

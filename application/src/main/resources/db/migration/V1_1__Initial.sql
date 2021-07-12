@@ -13,6 +13,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP VIEW IF EXISTS users cascade ;
+DROP VIEW IF EXISTS items cascade ;
+DROP VIEW IF EXISTS transactions cascade ;
+DROP VIEW IF EXISTS accounts cascade ;
 
 -- USERS
 -- This table is used to store the users of our application. The view returns the same data as the
@@ -21,11 +25,14 @@ $$ LANGUAGE plpgsql;
 CREATE TABLE IF NOT EXISTS users_table
 (
     id         uuid                 DEFAULT gen_random_uuid() PRIMARY KEY,
-    username   text UNIQUE NOT NULL,
+    email      text UNIQUE NOT NULL,
     password   text        not null default '',
     created_at timestamptz          default now(),
     updated_at timestamptz          default now()
 );
+
+
+DROP TRIGGER IF EXISTS users_updated_at_timestamp on users_table;
 
 CREATE TRIGGER users_updated_at_timestamp
     BEFORE UPDATE
@@ -33,10 +40,11 @@ CREATE TRIGGER users_updated_at_timestamp
     FOR EACH ROW
 EXECUTE PROCEDURE trigger_set_timestamp();
 
-CREATE VIEW users
+
+CREATE OR REPLACE VIEW users
 AS
 SELECT id,
-       username,
+       email,
        created_at,
        updated_at
 FROM users_table;
@@ -59,11 +67,14 @@ CREATE TABLE IF NOT EXISTS items_table
     updated_at           timestamptz default now()
 );
 
+DROP TRIGGER IF EXISTS items_updated_at_timestamp on items_table;
+
 CREATE TRIGGER items_updated_at_timestamp
     BEFORE UPDATE
     ON items_table
     FOR EACH ROW
 EXECUTE PROCEDURE trigger_set_timestamp();
+
 
 CREATE OR REPLACE VIEW items
 AS
@@ -101,11 +112,15 @@ CREATE TABLE IF NOT EXISTS accounts_table
     updated_at               timestamptz default now()
 );
 
+DROP TRIGGER IF EXISTS accounts_updated_at_timestamp on accounts_table;
+
 CREATE TRIGGER accounts_updated_at_timestamp
     BEFORE UPDATE
     ON accounts_table
     FOR EACH ROW
 EXECUTE PROCEDURE trigger_set_timestamp();
+
+DROP VIEW IF EXISTS accounts;
 
 CREATE OR REPLACE VIEW accounts
 AS
@@ -154,11 +169,15 @@ CREATE TABLE IF NOT EXISTS transactions_table
     updated_at               timestamptz default now()
 );
 
+DROP TRIGGER IF EXISTS transactions_updated_at_timestamp ON transactions_table;
+
 CREATE TRIGGER transactions_updated_at_timestamp
     BEFORE UPDATE
     ON transactions_table
     FOR EACH ROW
 EXECUTE PROCEDURE trigger_set_timestamp();
+
+DROP VIEW IF EXISTS transactions;
 
 CREATE OR REPLACE VIEW transactions
 AS
