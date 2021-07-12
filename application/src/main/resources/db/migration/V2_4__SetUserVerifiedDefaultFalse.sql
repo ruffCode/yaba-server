@@ -1,2 +1,2 @@
 alter table users_table
-alter column verified set default false;
+alter column  verified set default false;

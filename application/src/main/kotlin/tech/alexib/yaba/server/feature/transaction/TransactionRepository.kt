@@ -3,6 +3,7 @@ package tech.alexib.yaba.server.feature.transaction
 import io.r2dbc.spi.ConnectionFactory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import mu.KotlinLogging
@@ -33,6 +34,7 @@ interface TransactionRepository {
     fun findInRange(plaidItemId: String, startDate: LocalDate, endDate: LocalDate): Flow<TransactionEntity>
     suspend fun deleteTransactions(plaidIds: List<String>)
     suspend fun deleteTransactions(itemId: ItemId)
+    fun findByPlaidIds(plaidIds: List<String>): Flow<UUID>
 }
 
 private val logger = KotlinLogging.logger { }
@@ -137,11 +139,13 @@ class TransactionRepositoryImpl(
     }
 
     override suspend fun findByAccountId(ids: List<UUID>): List<TransactionEntity> {
-        return client.sql(
-            """
+        return if (ids.isNotEmpty()) {
+            client.sql(
+                """
             select * from transactions where transactions.account_id in (:ids)
         """.trimIndent()
-        ).bind("ids", ids).map { row -> r2dbcConverter.read(TransactionEntity::class.java, row) }.flow().toList()
+            ).bind("ids", ids).map { row -> r2dbcConverter.read(TransactionEntity::class.java, row) }.flow().toList()
+        } else emptyList()
     }
 
     override suspend fun deleteTransactions(itemId: ItemId) {
@@ -150,6 +154,16 @@ class TransactionRepositoryImpl(
             delete from transactions where item_id = :itemId
         """.trimIndent()
         ).bind("itemId", itemId.value).await()
+    }
+
+    override fun findByPlaidIds(plaidIds: List<String>): Flow<UUID> {
+        return if (plaidIds.isNotEmpty()) {
+            client.sql(
+                """
+           select id from transactions where transactions.plaid_transaction_id in (:ids)
+       """.trimIndent()
+            ).bind("ids", plaidIds).map { row -> row["id"] as UUID }.flow()
+        } else emptyFlow()
     }
 }
 

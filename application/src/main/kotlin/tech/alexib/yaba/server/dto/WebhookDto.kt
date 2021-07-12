@@ -3,6 +3,7 @@ package tech.alexib.yaba.server.dto
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.time.LocalDate
 import java.time.OffsetDateTime
 
 sealed class WebhookRequest
@@ -86,7 +87,7 @@ data class ItemWebhookRequest(
     @Contextual
     val consentExpirationTime: OffsetDateTime? = null,
     @SerialName("new_webhook_url")
-    val newWebhookUrk: String? = null
+    val newWebhookUrl: String? = null
 ) : WebhookRequest()
 
 @Serializable
@@ -95,10 +96,12 @@ enum class ItemWebhookCode {
      * Fired when an Item's webhook is updated. This will be sent to the newly specified webhook.
      */
     WEBHOOK_UPDATE_ACKNOWLEDGED,
+
     /**
      * Fired when an error is encountered with an Item. The error can be resolved by having the user go through Link’s update mode.
      */
     ERROR,
+
     /**
      * The USER_PERMISSION_REVOKED webhook is fired to when an end user has used the my.plaid.com portal to
      * revoke the permission that they previously granted to access an Item. Once access to an Item has been revoked,
@@ -106,6 +109,7 @@ enum class ItemWebhookCode {
      * a new Item must be created for the user.
      */
     USER_PERMISSION_REVOKED,
+
     /**
      * Fired when an Item’s access consent is expiring in 7 days. Some Items have explicit expiration times
      * and we try to relay this when possible to reduce service disruption. This can be resolved by having the user go through Link’s update mode.
@@ -197,3 +201,10 @@ data class AuthWebhookRequest(
     val accountId: String,
     val error: GenericWebhookError? = null
 ) : WebhookRequest()
+
+fun TransactionWebhookCode.toLocalDate():LocalDate = when (this) {
+    TransactionWebhookCode.INITIAL_UPDATE -> LocalDate.now().minusDays(30)
+    TransactionWebhookCode.HISTORICAL_UPDATE -> LocalDate.now().minusYears(2L)
+    TransactionWebhookCode.DEFAULT_UPDATE -> LocalDate.now().minusDays(14)
+    else -> LocalDate.now().minusDays(30)
+}

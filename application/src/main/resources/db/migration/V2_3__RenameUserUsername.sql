@@ -4,13 +4,13 @@ alter table users_table
     rename username to email;
 
 alter table users_table
-    add column verified bool not null default true;
+    add column if not exists verified bool not null default true;
 
 alter table users_table
-    add column reset_token text default null;
+    add column if not exists reset_token text default null;
 
 alter table users_table
-    add column active bool not null default true;
+    add column if not exists active bool not null default true;
 
 CREATE or REPLACE VIEW users
 AS

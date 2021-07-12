@@ -1,5 +1,5 @@
 alter table accounts_table
-    add column hidden bool default false;
+    add column if not exists hidden bool default false;
 
 
 

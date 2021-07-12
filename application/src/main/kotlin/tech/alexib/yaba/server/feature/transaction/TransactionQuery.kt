@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.toList
 import mu.KotlinLogging
 import org.springframework.stereotype.Component
 import tech.alexib.yaba.domain.item.itemId
+import tech.alexib.yaba.domain.user.userId
+import tech.alexib.yaba.server.fcm.FCMService
 import tech.alexib.yaba.server.feature.account.AccountRepository
 import tech.alexib.yaba.server.feature.account.accountId
 import tech.alexib.yaba.server.feature.item.ItemRepository
@@ -22,7 +24,8 @@ class TransactionQuery(
     private val transactionRepository: TransactionRepository,
     private val transactionService: TransactionService,
     private val itemRepository: ItemRepository,
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    private val fcmService: FCMService
 ) : Query {
 
     @Authenticated
@@ -30,7 +33,7 @@ class TransactionQuery(
     suspend fun transactionsByUser(context: YabaGraphQLContext): List<TransactionDto> {
 
         accountRepository.findByUserId(context.id())
-            //        val items = itemRepository.findByUserId(context.id()).toList()
+        //        val items = itemRepository.findByUserId(context.id()).toList()
 //        val itemAccessTokens = items.map { it.plaidItemId }
 //
 //        itemAccessTokens.forEach {
@@ -48,6 +51,25 @@ class TransactionQuery(
             it.toDto()
         }.toList()
 
+    @Authenticated
     suspend fun transactionsByItemId(itemId: UUID): List<TransactionDto> =
         transactionRepository.findByItemId(itemId.itemId()).map { it.toDto() }.toList()
+
+    @Authenticated
+    suspend fun transactionsByIds(ids: List<UUID>): List<TransactionDto> =
+        transactionRepository.findById(ids).map { it.toDto() }
+
+    @Authenticated
+    suspend fun transactionsUpdated(context: YabaGraphQLContext, updateId: UUID): TransactionsUpdatedDto? {
+        val userId = context.id()
+        return transactionService.getTransactionUpdate(userId, updateId)
+    }
+
+    suspend fun updateTest(userId: UUID, updateId: UUID): Boolean {
+        fcmService.sendTransactionsToUpdate(
+            userId = userId.userId(),
+            updateId = updateId
+        )
+        return true
+    }
 }

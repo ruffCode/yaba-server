@@ -96,7 +96,6 @@ class ItemServiceImpl(
             Pair(it.toDomain(), it.timesUnlinked).left()
         })
 
-
     private suspend fun createItem(item: Item): Item {
         itemRepository.createItem(item.toEntity())
         return item

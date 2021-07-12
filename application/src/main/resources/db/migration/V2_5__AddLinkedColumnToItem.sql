@@ -1,6 +1,6 @@
 
 alter table items_table
-add column linked bool default true;
+add column if not exists linked bool default true;
 
 CREATE  OR REPLACE VIEW items
 AS

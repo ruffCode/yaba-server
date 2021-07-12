@@ -9,7 +9,6 @@ import tech.alexib.yaba.server.graphql.directive.Authenticated
 import tech.alexib.yaba.server.plaid.PlaidService
 import tech.alexib.yaba.server.repository.InstitutionRepository
 
-//{"Authorization":"Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhbGV4aXJycnI2QGFvbC5jb20iLCJyb2xlIjpbIlJPTEVfVVNFUiJdLCJqdGkiOiJhNzBiMzIyMS04ZmUwLTRkNDUtYmQzYi05OTZlYjhkYTRhZDMifQ.jn3_0DhIunW_Lcfs_naYmI1tve9Lq5iNJbsy5cNsvKU7yYIsAdeO-QS_etR03NLqnjMzdzyruqMBMwsTsSTGYA"}
 @Component
 class InstitutionQuery(
     private val plaidService: PlaidService,

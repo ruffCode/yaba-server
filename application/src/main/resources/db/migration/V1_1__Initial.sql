@@ -1,5 +1,24 @@
+CREATE EXTENSION if not exists pgcrypto;
 CREATE EXTENSION if not exists pg_trgm;
-CREATE TABLE users_table
+
+-- This trigger updates the value in the updated_at column. It is used in the tables below to log
+-- when a row was last updated.
+
+CREATE OR REPLACE FUNCTION trigger_set_timestamp()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+-- USERS
+-- This table is used to store the users of our application. The view returns the same data as the
+-- table, we're just creating it to follow the pattern used in other tables.
+
+CREATE TABLE IF NOT EXISTS users_table
 (
     id         uuid                 DEFAULT gen_random_uuid() PRIMARY KEY,
     username   text UNIQUE NOT NULL,
@@ -7,6 +26,12 @@ CREATE TABLE users_table
     created_at timestamptz          default now(),
     updated_at timestamptz          default now()
 );
+
+CREATE TRIGGER users_updated_at_timestamp
+    BEFORE UPDATE
+    ON users_table
+    FOR EACH ROW
+EXECUTE PROCEDURE trigger_set_timestamp();
 
 CREATE VIEW users
 AS
@@ -17,7 +42,12 @@ SELECT id,
 FROM users_table;
 
 
-CREATE TABLE items_table
+-- ITEMS
+-- This table is used to store the items associated with each user. The view returns the same data
+-- as the table, we're just using both to maintain consistency with our other tables. For more info
+-- on the Plaid Item schema, see the docs page: https://plaid.com/docs/#item-schema
+
+CREATE TABLE IF NOT EXISTS items_table
 (
     id                   uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id              uuid REFERENCES users_table (id) ON DELETE CASCADE,
@@ -29,8 +59,13 @@ CREATE TABLE items_table
     updated_at           timestamptz default now()
 );
 
+CREATE TRIGGER items_updated_at_timestamp
+    BEFORE UPDATE
+    ON items_table
+    FOR EACH ROW
+EXECUTE PROCEDURE trigger_set_timestamp();
 
-CREATE VIEW items
+CREATE OR REPLACE VIEW items
 AS
 SELECT id,
        plaid_item_id,
@@ -43,7 +78,12 @@ SELECT id,
 FROM items_table;
 
 
-CREATE TABLE accounts_table
+-- ACCOUNTS
+-- This table is used to store the accounts associated with each item. The view returns all the
+-- data from the accounts table and some data from the items view. For more info on the Plaid
+-- Accounts schema, see the docs page:  https://plaid.com/docs/#account-schema
+
+CREATE TABLE IF NOT EXISTS accounts_table
 (
     id                       uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
     item_id                  uuid REFERENCES items_table (id) ON DELETE CASCADE,
@@ -57,10 +97,15 @@ CREATE TABLE accounts_table
     unofficial_currency_code text,
     type                     text        NOT NULL,
     subtype                  text        NOT NULL,
-    hidden                   bool        default false,
     created_at               timestamptz default now(),
     updated_at               timestamptz default now()
 );
+
+CREATE TRIGGER accounts_updated_at_timestamp
+    BEFORE UPDATE
+    ON accounts_table
+    FOR EACH ROW
+EXECUTE PROCEDURE trigger_set_timestamp();
 
 CREATE OR REPLACE VIEW accounts
 AS
@@ -79,13 +124,17 @@ SELECT a.id,
        a.type,
        a.subtype,
        a.created_at,
-       a.updated_at,
-       a.hidden
+       a.updated_at
 FROM accounts_table a
          LEFT JOIN items i ON i.id = a.item_id;
 
 
-CREATE TABLE transactions_table
+-- TRANSACTIONS
+-- This table is used to store the transactions associated with each account. The view returns all
+-- the data from the transactions table and some data from the accounts view. For more info on the
+-- Plaid Transactions schema, see the docs page: https://plaid.com/docs/#transaction-schema
+
+CREATE TABLE IF NOT EXISTS transactions_table
 (
     id                       uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
     account_id               uuid REFERENCES accounts_table (id) ON DELETE CASCADE,
@@ -105,7 +154,13 @@ CREATE TABLE transactions_table
     updated_at               timestamptz default now()
 );
 
-CREATE VIEW transactions
+CREATE TRIGGER transactions_updated_at_timestamp
+    BEFORE UPDATE
+    ON transactions_table
+    FOR EACH ROW
+EXECUTE PROCEDURE trigger_set_timestamp();
+
+CREATE OR REPLACE VIEW transactions
 AS
 SELECT t.id,
        t.plaid_transaction_id,
@@ -130,7 +185,10 @@ FROM transactions_table t
          LEFT JOIN accounts a ON t.account_id = a.id;
 
 
-CREATE TABLE link_events_table
+-- The link_events_table is used to log responses from the Plaid API for client requests to the
+-- Plaid Link client. This information is useful for troubleshooting.
+
+CREATE TABLE IF NOT EXISTS link_events_table
 (
     id              uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
     type            text NOT NULL,
@@ -142,7 +200,11 @@ CREATE TABLE link_events_table
     created_at      timestamptz default now()
 );
 
-CREATE TABLE plaid_api_events_table
+
+-- The plaid_api_events_table is used to log responses from the Plaid API for server requests to
+-- the Plaid client. This information is useful for troubleshooting.
+
+CREATE TABLE IF NOT EXISTS plaid_api_events_table
 (
     id           SERIAL PRIMARY KEY,
     item_id      integer,
@@ -153,8 +215,7 @@ CREATE TABLE plaid_api_events_table
     error_code   text,
     created_at   timestamptz default now()
 );
-
-create table if not exists institutions_table
+create table IF NOT EXISTS institutions_table
 (
     id                   uuid default gen_random_uuid() primary key,
     plaid_institution_id text not null unique,
@@ -166,137 +227,4 @@ create table if not exists institutions_table
     url                  text,
     oauth                bool,
     routing_numbers      text
-);
-create table if not exists user_push_tokens
-(
-    token   text primary key,
-    user_id uuid not null,
-    foreign key (user_id) references users_table (id)
-);
-
-
-drop view users;
-
-alter table users_table
-    rename username to email;
-
-alter table users_table
-    add column verified bool not null default true;
-
-alter table users_table
-    add column reset_token text default null;
-
-alter table users_table
-    add column active bool not null default true;
-
-CREATE or REPLACE VIEW users
-AS
-SELECT id,
-       email,
-       users_table.active,
-       users_table.verified,
-       created_at,
-       updated_at
-FROM users_table;
-alter table users_table
-    alter column verified set default false;
-
-alter table items_table
-    add column linked bool default true;
-
-CREATE OR REPLACE VIEW items
-AS
-SELECT id,
-       plaid_item_id,
-       user_id,
-       plaid_access_token,
-       plaid_institution_id,
-       status,
-       created_at,
-       updated_at,
-       linked
-FROM items_table;
-
-alter table items_table
-    add column times_unlinked smallint default 0;
-
-create or replace function increment_times_unlinked() returns trigger
-    language plpgsql
-as
-$$
-BEGIN
-    if new.linked=false and old.linked= true then
-        NEW.times_unlinked = OLD.times_unlinked + 1;
-    end if;
-    RETURN NEW;
-END;
-$$;
-
-CREATE TRIGGER items_times_unlinked
-    BEFORE UPDATE
-    ON items_table
-    FOR EACH ROW
-EXECUTE PROCEDURE increment_times_unlinked();
-
-CREATE OR REPLACE VIEW items
-AS
-SELECT id,
-       plaid_item_id,
-       user_id,
-       plaid_access_token,
-       plaid_institution_id,
-       status,
-       created_at,
-       updated_at,
-       linked,
-       times_unlinked
-FROM items_table;
-
-create table if not exists categories
-(
-    id        int primary key not null,
-    grp       text            not null,
-    hierarchy text[]          not null
-);
-
-alter table transactions_table
-    add column if not exists merchant_name text default null;
-
-alter table transactions_table
-    add column if not exists category_id int default null;
-
-create or replace VIEW transactions
-AS
-SELECT t.id,
-       t.plaid_transaction_id,
-       t.account_id,
-       a.plaid_account_id,
-       a.item_id,
-       a.plaid_item_id,
-       a.user_id,
-       t.category,
-       t.subcategory,
-       t.type,
-       t.name,
-       t.amount,
-       t.iso_currency_code,
-       t.unofficial_currency_code,
-       t.date,
-       t.pending,
-       t.account_owner,
-       t.created_at,
-       t.updated_at,
-       t.merchant_name
-FROM transactions_table t
-         LEFT JOIN accounts a ON t.account_id = a.id;
-
-create table if not exists transaction_updates
-(
-    id      uuid default gen_random_uuid() primary key,
-    user_id uuid not null,
-    added   text[],
-    removed text[],
-    created_at timestamptz default now(),
-    foreign key (user_id) references users_table (id)
-        on delete cascade
 );

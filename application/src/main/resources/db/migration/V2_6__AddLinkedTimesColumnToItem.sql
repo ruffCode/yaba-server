@@ -1,5 +1,5 @@
 alter table items_table
-add column times_unlinked smallint default 0;
+add column if not exists times_unlinked smallint default 0;
 
 CREATE OR REPLACE FUNCTION increment_times_unlinked()
     RETURNS TRIGGER AS $$
