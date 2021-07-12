@@ -1,5 +1,8 @@
 package tech.alexib.yaba.server.controller
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -54,7 +57,7 @@ class WebhookHandler(
         return respondOk("OK")
     }
 
-    private suspend fun handleItem(webhookRequest: ItemWebhookRequest) {
+    private fun handleItem(webhookRequest: ItemWebhookRequest) {
         when (webhookRequest.webhookCode) {
             ItemWebhookCode.PENDING_EXPIRATION -> logger.info {
                 "Pending Expiration ${webhookRequest.itemId}" +
@@ -69,24 +72,25 @@ class WebhookHandler(
         }
     }
 
-    private suspend fun handleTransactions(webhookRequest: TransactionWebhookRequest) {
-
-        val startDate = webhookRequest.webhookCode.toLocalDate()
-        when (webhookRequest.webhookCode) {
-            TransactionWebhookCode.HISTORICAL_UPDATE, TransactionWebhookCode.DEFAULT_UPDATE -> {
-                transactionService.updateTransactions(
-                    PlaidItemId(webhookRequest.itemId),
-                    startDate,
-                    LocalDate.now(),
-                    webhookRequest.webhookCode == TransactionWebhookCode.DEFAULT_UPDATE
-                )
-            }
-            TransactionWebhookCode.TRANSACTIONS_REMOVED -> {
-                webhookRequest.removedTransactions?.let {
-                    transactionService.deleteTransactions(it,PlaidItemId(webhookRequest.itemId))
+    private fun handleTransactions(webhookRequest: TransactionWebhookRequest) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val startDate = webhookRequest.webhookCode.toLocalDate()
+            when (webhookRequest.webhookCode) {
+                TransactionWebhookCode.HISTORICAL_UPDATE, TransactionWebhookCode.DEFAULT_UPDATE -> {
+                    transactionService.updateTransactions(
+                        PlaidItemId(webhookRequest.itemId),
+                        startDate,
+                        LocalDate.now(),
+                        webhookRequest.webhookCode == TransactionWebhookCode.DEFAULT_UPDATE
+                    )
                 }
-            }
-            else -> {
+                TransactionWebhookCode.TRANSACTIONS_REMOVED -> {
+                    webhookRequest.removedTransactions?.let {
+                        transactionService.deleteTransactions(it, PlaidItemId(webhookRequest.itemId))
+                    }
+                }
+                else -> {
+                }
             }
         }
     }
