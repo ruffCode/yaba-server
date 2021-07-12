@@ -23,24 +23,12 @@ private val logger = KotlinLogging.logger {}
 class TransactionQuery(
     private val transactionRepository: TransactionRepository,
     private val transactionService: TransactionService,
-    private val itemRepository: ItemRepository,
-    private val accountRepository: AccountRepository,
     private val fcmService: FCMService
 ) : Query {
 
     @Authenticated
     @GraphQLDescription("Returns all of user's transactions")
     suspend fun transactionsByUser(context: YabaGraphQLContext): List<TransactionDto> {
-
-        accountRepository.findByUserId(context.id())
-        //        val items = itemRepository.findByUserId(context.id()).toList()
-//        val itemAccessTokens = items.map { it.plaidItemId }
-//
-//        itemAccessTokens.forEach {
-//            transactionService.updateTransactions(
-//                plaidItemId = PlaidItemId(it), startDate = LocalDate.now().minusDays(180), endDate = LocalDate.now(),
-//            )
-//        }
         return transactionRepository.findByUserId(context.id()).map { it.toDto() }.toList()
     }
 
@@ -65,11 +53,11 @@ class TransactionQuery(
         return transactionService.getTransactionUpdate(userId, updateId)
     }
 
-    suspend fun updateTest(userId: UUID, updateId: UUID): Boolean {
-        fcmService.sendTransactionsToUpdate(
-            userId = userId.userId(),
-            updateId = updateId
-        )
-        return true
-    }
+//    suspend fun updateTest(userId: UUID, updateId: UUID): Boolean {
+//        fcmService.sendTransactionsToUpdate(
+//            userId = userId.userId(),
+//            updateId = updateId
+//        )
+//        return true
+//    }
 }

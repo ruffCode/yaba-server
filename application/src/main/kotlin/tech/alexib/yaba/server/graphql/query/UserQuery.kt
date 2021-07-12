@@ -6,14 +6,12 @@ import tech.alexib.yaba.server.feature.user.UserDto
 import tech.alexib.yaba.server.feature.user.UserRepository
 import tech.alexib.yaba.server.graphql.context.YabaGraphQLContext
 import tech.alexib.yaba.server.graphql.directive.Authenticated
-import tech.alexib.yaba.server.service.UserService
 import tech.alexib.yaba.server.util.unauthorized
 
 
 @Component
 class UserQuery(
     private val userRepository: UserRepository,
-    private val userService: UserService
 ) : Query {
 
     @Authenticated
@@ -27,8 +25,6 @@ class UserQuery(
             )
         })
     }
-
-
 }
 
 
