@@ -180,6 +180,30 @@ class TransactionDbTest : BaseIntegrationTest() {
         }
     }
 
+    @Order(1)
+    @Test
+    fun `find by transactionId list`() {
+        runBlocking {
+            val transactions = transactionRepository.findByItemId(ItemStub.item.id).toList()
+            val ids = transactions.mapNotNull { it.id }
+
+            val found = transactionRepository.findById(ids)
+
+            Assertions.assertEquals(transactions.size, found.size)
+        }
+    }
+
+    @Order(1)
+    @Test
+    fun `does not throw when by transactionId list is empty`() {
+        Assertions.assertDoesNotThrow {
+            runBlocking {
+                val ids = listOf<UUID>()
+                transactionRepository.findById(ids)
+            }
+        }
+    }
+
     @Order(2)
     @Test
     fun insertsTransactionUpdate() {
@@ -203,8 +227,8 @@ class TransactionDbTest : BaseIntegrationTest() {
 
             Assertions.assertNotNull(update?.added)
             Assertions.assertNotNull(update?.removed)
-            Assertions.assertEquals(10,update?.added?.size)
-            Assertions.assertEquals(10,update?.removed?.size)
+            Assertions.assertEquals(10, update?.added?.size)
+            Assertions.assertEquals(10, update?.removed?.size)
 
         }
     }

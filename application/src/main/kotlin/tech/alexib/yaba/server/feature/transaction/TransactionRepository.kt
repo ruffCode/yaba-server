@@ -123,19 +123,22 @@ class TransactionRepositoryImpl(
     }
 
     override suspend fun findById(ids: List<UUID>): List<TransactionEntity> {
-        return client.sql(
+        return if (ids.isNotEmpty()) client.sql(
             """
             select * from transactions where id in (:ids)
         """.trimIndent()
         ).bind("ids", ids).map { row -> r2dbcConverter.read(TransactionEntity::class.java, row) }.flow().toList()
+        else emptyList()
     }
 
     override suspend fun findByItemId(ids: List<UUID>): List<TransactionEntity> {
-        return client.sql(
+        return if (ids.isNotEmpty()) client.sql(
             """
             select * from transactions where transactions.item_id in (:ids)
         """.trimIndent()
-        ).bind("ids", ids).map { row -> r2dbcConverter.read(TransactionEntity::class.java, row) }.flow().toList()
+        ).bind("ids", ids).map { row -> r2dbcConverter.read(TransactionEntity::class.java, row) }.flow()
+            .toList()
+        else emptyList()
     }
 
     override suspend fun findByAccountId(ids: List<UUID>): List<TransactionEntity> {
@@ -144,7 +147,8 @@ class TransactionRepositoryImpl(
                 """
             select * from transactions where transactions.account_id in (:ids)
         """.trimIndent()
-            ).bind("ids", ids).map { row -> r2dbcConverter.read(TransactionEntity::class.java, row) }.flow().toList()
+            ).bind("ids", ids).map { row -> r2dbcConverter.read(TransactionEntity::class.java, row) }
+                .flow().toList()
         } else emptyList()
     }
 
