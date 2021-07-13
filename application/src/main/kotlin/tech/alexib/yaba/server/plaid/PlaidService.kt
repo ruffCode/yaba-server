@@ -2,6 +2,7 @@ package tech.alexib.yaba.server.plaid
 
 
 import arrow.core.Either
+import kotlinx.coroutines.delay
 import kotlinx.datetime.toKotlinLocalDate
 import mu.KotlinLogging
 import org.springframework.stereotype.Component
@@ -63,7 +64,7 @@ interface PlaidService {
 }
 
 @Component
-class PlaidServiceImpl(private val plaidConfig: PlaidConfig):PlaidService {
+class PlaidServiceImpl(private val plaidConfig: PlaidConfig) : PlaidService {
 
 
     private val plaidApiConfiguration = PlaidApiConfiguration(
@@ -75,7 +76,7 @@ class PlaidServiceImpl(private val plaidConfig: PlaidConfig):PlaidService {
     private val plaidClient = PlaidClient(plaidApiConfiguration)
 
 
-  override  suspend fun createLinkToken(
+    override suspend fun createLinkToken(
         userId: UserId,
         accessToken: String?
     ): Either<PlaidError, LinkTokenCreateResponse> {
@@ -98,7 +99,7 @@ class PlaidServiceImpl(private val plaidConfig: PlaidConfig):PlaidService {
         }
     }
 
-   override suspend fun exchangeToken(publicToken: String): ItemPublicTokenExchangeResponse {
+    override suspend fun exchangeToken(publicToken: String): ItemPublicTokenExchangeResponse {
         val itemPublicTokenExchangeRequest =
             ItemPublicTokenExchangeRequest(publicToken = publicToken)
 
@@ -115,7 +116,7 @@ class PlaidServiceImpl(private val plaidConfig: PlaidConfig):PlaidService {
         return itemGetResponse.item
     }
 
-    override  suspend fun getAccountsForItem(accessToken: String): Either<PlaidError, List<AccountBase>> {
+    override suspend fun getAccountsForItem(accessToken: String): Either<PlaidError, List<AccountBase>> {
         return Either.catch {
             plaidClient.accountsGet(
                 AccountsGetRequest(
@@ -142,7 +143,7 @@ class PlaidServiceImpl(private val plaidConfig: PlaidConfig):PlaidService {
         )
     }
 
-    override  suspend fun getInstitution(id: String): InstitutionsGetByIdResponse {
+    override suspend fun getInstitution(id: String): InstitutionsGetByIdResponse {
         return plaidClient.institutionsGetById(
             InstitutionsGetByIdRequest(
                 institutionId = id,
@@ -216,8 +217,22 @@ class PlaidServiceImpl(private val plaidConfig: PlaidConfig):PlaidService {
         return try {
             fetchTransactions(request, 100, 0)
         } catch (e: PlaidError) {
-            logger.error { e.errorMessage }
-            throw e
+            when (e.errorType) {
+                PlaidError.ErrorType.ITEM_ERROR -> {
+                    if (e.errorCode == "PRODUCT_NOT_READY") {
+                        logger.error { "PRODUCT NOT READY" }
+                        delay(300)
+                        fetchTransactions(request, 100, 0)
+                    } else {
+                        logger.error { e.errorMessage }
+                        throw e
+                    }
+                }
+                else -> {
+                    logger.error { e.errorMessage }
+                    throw e
+                }
+            }
         } catch (e: Throwable) {
             logger.error { e }
             throw e

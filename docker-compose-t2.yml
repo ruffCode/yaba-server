@@ -43,7 +43,7 @@ services:
       - no-new-privileges:true
   yaba-server:
     container_name: yabaServerSandbox
-    image: ruffcode.azurecr.io/yaba-server:0.1.4-SNAPSHOT
+    image: ruffcode.azurecr.io/yaba-server:0.1.5-SNAPSHOT
     #    network_mode: host
     networks:
       - t2_proxy
