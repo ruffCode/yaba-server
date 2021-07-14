@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service
 import tech.alexib.yaba.domain.user.Email
 import tech.alexib.yaba.domain.user.User
 import tech.alexib.yaba.domain.user.UserId
+import tech.alexib.yaba.domain.user.UserRole
 import tech.alexib.yaba.server.config.JwtConfig
 import tech.alexib.yaba.server.feature.user.UserDto
 
@@ -55,6 +56,8 @@ class JWTService(private val jwtConfig: JwtConfig) {
     }
 
     companion object {
-        private val defaultRoles = arrayOf(SimpleGrantedAuthority("ROLE_USER").toString())
+        private val defaultRoles = arrayOf(SimpleGrantedAuthority("USER").toString())
     }
+
+    private fun UserRole.toClaims() = arrayOf(SimpleGrantedAuthority(this.name).toString())
 }

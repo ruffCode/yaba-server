@@ -3,15 +3,14 @@ package tech.alexib.yaba.server.user
 
 import io.kotest.matchers.shouldBe
 import io.r2dbc.spi.ConnectionFactory
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
+import org.junit.Assert
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.MethodOrderer
-import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestMethodOrder
@@ -19,14 +18,15 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.await
 import org.springframework.security.crypto.password.PasswordEncoder
+import tech.alexib.yaba.domain.user.UserRole
 import tech.alexib.yaba.server.UsersStub
 import tech.alexib.yaba.server.config.BaseIntegrationTest
-import tech.alexib.yaba.server.service.UserService
-import tech.alexib.yaba.server.repository.LinkEventRepository
 import tech.alexib.yaba.server.entity.LinkEvent
 import tech.alexib.yaba.server.entity.LinkEventId
 import tech.alexib.yaba.server.feature.user.UserRepository
 import tech.alexib.yaba.server.feature.user.toEntity
+import tech.alexib.yaba.server.repository.LinkEventRepository
+import tech.alexib.yaba.server.service.UserService
 import java.util.UUID
 
 private val logger = KotlinLogging.logger { }
@@ -68,7 +68,6 @@ class UserDbTest : BaseIntegrationTest() {
     }
 
 
-
     @Test
     fun `retrieves user by id`() {
         runBlocking {
@@ -86,7 +85,11 @@ class UserDbTest : BaseIntegrationTest() {
         runBlocking {
             userRepository.findByEmail(usersStub[2].email).fold({
                 fail(it.message)
-            }, { it.id.shouldBe(usersStub[2].id.value) })
+            }, {
+                Assert.assertEquals(it.id, usersStub[2].id.value)
+                Assert.assertEquals(it.role, UserRole.USER.name)
+
+            })
         }
     }
 

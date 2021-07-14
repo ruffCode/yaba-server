@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.ServerRequest
 import org.springframework.web.reactive.socket.WebSocketSession
 import tech.alexib.yaba.domain.user.UserId
+import tech.alexib.yaba.domain.user.UserRole
 import tech.alexib.yaba.domain.user.userId
 import tech.alexib.yaba.server.security.JWTService
 import tech.alexib.yaba.server.service.UserService
@@ -19,9 +20,11 @@ import java.util.UUID
 
 class YabaGraphQLContext(
     request: ServerRequest,
-    val userId: UserId? = null
+    val userId: UserId? = null,
+    val role: UserRole = UserRole.USER
 ) : SpringGraphQLContext(request) {
     fun id(): UserId = userId ?: unauthorized()
+    fun isAdmin(): Boolean = if (role != UserRole.ADMIN) unauthorized() else true
 }
 
 class YabaSubscriptionGraphQLContext(
@@ -36,21 +39,30 @@ class YabaGraphqlContextFactory(private val userService: UserService, private va
     SpringGraphQLContextFactory<YabaGraphQLContext>() {
     override suspend fun generateContext(request: ServerRequest): YabaGraphQLContext {
 
-        val subject = request.headers().firstHeader(HttpHeaders.AUTHORIZATION)?.let { authHeader ->
-            //Check header length so that this does not throw if token is null
-            if (authHeader.startsWith("Bearer") && authHeader.length > 9) {
-                val authToken = authHeader.substring(7)
-                val decoded = jwtService.decodeAccessToken(authToken)
-                if (userService.isUserActive(UUID.fromString(decoded.id).userId())) {
-                    return@let decoded.id
-                } else null
+        val subject: Pair<UserId, UserRole>? =
+            request.headers().firstHeader(HttpHeaders.AUTHORIZATION)?.let { authHeader ->
+                //Check header length so that this does not throw if token is null
+                if (authHeader.startsWith("Bearer") && authHeader.length > 9) {
+                    val authToken = authHeader.substring(7)
+                    val decoded = jwtService.decodeAccessToken(authToken)
+                    val user = userService.findById(UUID.fromString(decoded.id).userId())
+                    return@let when {
+                        user == null -> null
+                        !user.active -> null
+                        else -> Pair(user.id, user.role)
+                    }
 
-            } else null
-        }
+//                if (userService.isUserActive(UUID.fromString(decoded.id).userId())) {
+//                    return@let decoded.id
+//                } else null
+
+                } else null
+            }
 
         return YabaGraphQLContext(
             request = request,
-            userId = subject?.let { UserId(UUID.fromString(it)) }
+            userId = subject?.first,
+            role = subject?.second ?: UserRole.USER
         )
     }
 }

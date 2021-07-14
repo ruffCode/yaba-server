@@ -46,8 +46,9 @@ interface ItemRepository {
     fun findAll(): Flow<ItemEntity>
     suspend fun unlink(itemId: ItemId, userId: UserId)
     suspend fun relink(institutionId: InstitutionId, userId: UserId, plaidAccessToken: PlaidAccessToken): ItemEntity
-
+    suspend fun deleteByAccessToken(accessToken: String)
 }
+
 
 @Repository
 class ItemRepositoryImpl(
@@ -167,6 +168,13 @@ class ItemRepositoryImpl(
 
     private fun mapEntity(row: Row): ItemEntity = r2dbcConverter.read(ItemEntity::class.java, row)
 
+    override suspend fun deleteByAccessToken(accessToken: String) {
+        client.sql(
+            """
+            delete from items where plaid_access_token = :accessToken
+        """.trimIndent()
+        ).bind("accessToken", accessToken).await()
+    }
 }
 
 sealed class ItemException {

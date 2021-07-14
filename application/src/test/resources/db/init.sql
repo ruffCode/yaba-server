@@ -300,3 +300,39 @@ create table if not exists transaction_updates
     foreign key (user_id) references users_table (id)
         on delete cascade
 );
+
+DO $$ BEGIN
+    CREATE TYPE user_role AS ENUM( 'USER', 'ADMIN');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+alter table users_table
+add column role text default 'USER';
+
+DROP VIEW IF EXISTS users;
+CREATE or REPLACE VIEW users
+AS
+SELECT id,
+       email,
+       users_table.active,
+       users_table.verified,
+       created_at,
+       updated_at,
+       users_table.role
+FROM users_table;
+
+create table if not exists last_login_table
+(
+    user_id    uuid primary key not null,
+    last_login timestamptz      not null,
+    foreign key (user_id) references users_table (id)
+        on delete cascade
+);
+
+alter table user_push_tokens
+    drop constraint user_push_tokens_user_id_fkey,
+    add constraint user_push_tokens_user_id_fkey
+        foreign key (user_id)
+            references users_table (id)
+            on delete cascade;

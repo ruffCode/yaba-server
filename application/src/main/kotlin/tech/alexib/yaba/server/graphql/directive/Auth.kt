@@ -24,3 +24,21 @@ class AuthenticationSchemaDirectiveWiring : KotlinSchemaDirectiveWiring {
         return field
     }
 }
+
+@GraphQLDirective(name = "admin", "Checks if user is an admin")
+annotation class Admin
+
+class AdminSchemaDirectiveWiring : KotlinSchemaDirectiveWiring {
+    override fun onField(environment: KotlinFieldDirectiveEnvironment): GraphQLFieldDefinition {
+        val field = environment.element
+        val originalDataFetcher = environment.getDataFetcher()
+        val adminAuthFetcher = DataFetcher { dataEnv ->
+            val context = dataEnv.getContext<YabaGraphQLContext>()
+            context.id()
+            context.isAdmin()
+            originalDataFetcher.get(dataEnv)
+        }
+        environment.setDataFetcher(adminAuthFetcher)
+        return field
+    }
+}

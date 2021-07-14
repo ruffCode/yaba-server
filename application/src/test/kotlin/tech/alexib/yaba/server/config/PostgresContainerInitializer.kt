@@ -2,12 +2,15 @@ package tech.alexib.yaba.server.config
 
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration
 import io.r2dbc.postgresql.PostgresqlConnectionFactory
+import io.r2dbc.postgresql.codec.EnumCodec
 import mu.KotlinLogging
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.PostgreSQLContainer
+import reactor.core.publisher.Mono
+import tech.alexib.yaba.domain.user.UserRole
 
 private val logger = KotlinLogging.logger { }
 

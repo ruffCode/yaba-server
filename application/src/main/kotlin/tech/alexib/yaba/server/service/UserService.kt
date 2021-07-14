@@ -30,6 +30,7 @@ interface UserService {
     suspend fun register(request: RegisterUserRequest): User
     suspend fun findByEmail(email: String): UserDto
     suspend fun isUserActive(id: UserId): Boolean
+    suspend fun findById(id: UserId): User?
     fun addToken(user: UserDto): UserDto
 }
 
@@ -53,7 +54,10 @@ class UserServiceImpl(private val authUtil: AuthUtil, private val userRepository
                 is UserLoginError.InvalidCredentials -> logger.error { "Invalid credentials" }
             }
             unauthorized()
-        }, { it })
+        }, {
+            userRepository.setLastLogin(it.id)
+            it
+        })
 
     }
 
@@ -113,4 +117,7 @@ class UserServiceImpl(private val authUtil: AuthUtil, private val userRepository
     override fun addToken(user: UserDto): UserDto =
         user.copy(token = authUtil.generateToken(UserId(user.id), Email(user.email)))
 
+    override suspend fun findById(id: UserId): User? {
+        return userRepository.findById(id).fold({ null }, { it.toDomain() })
+    }
 }

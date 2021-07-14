@@ -12,6 +12,7 @@ import org.springframework.data.relational.core.mapping.Table
 import tech.alexib.yaba.domain.common.UUIDSerializer
 import tech.alexib.yaba.domain.user.User
 import tech.alexib.yaba.domain.user.UserId
+import tech.alexib.yaba.domain.user.UserRole
 import tech.alexib.yaba.domain.user.userId
 import tech.alexib.yaba.server.security.JWTService
 import tech.alexib.yaba.server.util.get
@@ -25,6 +26,7 @@ data class UserEntity(
     val email: String,
     val password: String,
     val active: Boolean = true,
+    val role: String = UserRole.USER.name,
     @Column("created_at")
     @CreatedDate
     val createdAt: OffsetDateTime = OffsetDateTime.now(),
@@ -46,21 +48,27 @@ data class UserEntity(
             id = user.id.value,
             email = user.email,
             password = user.password,
+            role = user.role.name,
             createdAt = user.createdAt,
             updatedAt = user.updatedAt
-
         )
     }
 }
 
 fun UserEntity.toDomain() = this.run {
-    User(id = id.userId(), email = email, password = password, createdAt = createdAt, updatedAt = updatedAt)
+    User(
+        id = id.userId(),
+        email = email,
+        password = password,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        role = UserRole.valueOf(role)
+    )
 }
 
 fun User.toEntity() = UserEntity.fromDomain(this)
 
 
-fun UserDto.addToken(jwtService: JWTService): UserDto = this.copy(token = jwtService.accessToken(this))
 
 fun User.toDto() = UserDto(
     id = id.value,

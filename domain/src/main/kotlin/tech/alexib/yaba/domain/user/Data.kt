@@ -16,6 +16,8 @@ data class User(
     val email: String,
     val password: String,
     val token: String? = null,
+    val role: UserRole = UserRole.USER,
+    val active:Boolean = true,
     @Contextual
     @SerialName("created_at")
     val createdAt: OffsetDateTime = OffsetDateTime.now(),
@@ -37,6 +39,12 @@ value class Email(val value: String)
 fun Email.isValid(): Boolean = this.value.isNotEmpty() && this.value.matches(
     Regex("^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$")
 )
+
+@Serializable
+enum class UserRole {
+    USER,
+    ADMIN
+}
 
 fun UUID.userId() = UserId(this)
 

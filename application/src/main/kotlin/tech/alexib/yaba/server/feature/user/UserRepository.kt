@@ -9,8 +9,6 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitFirstOrNull
-import kotlinx.coroutines.reactive.awaitSingleOrNull
-
 import org.springframework.data.r2dbc.convert.R2dbcConverter
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.data.r2dbc.core.select
@@ -18,12 +16,11 @@ import org.springframework.data.r2dbc.query.Criteria.where
 import org.springframework.data.relational.core.query.Query
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.await
-import org.springframework.r2dbc.core.awaitOneOrNull
 import org.springframework.r2dbc.core.flow
 import org.springframework.stereotype.Repository
 import tech.alexib.yaba.domain.user.User
 import tech.alexib.yaba.domain.user.UserId
-
+import java.time.OffsetDateTime
 import java.util.UUID
 
 interface UserRepository {
@@ -33,6 +30,7 @@ interface UserRepository {
     suspend fun findByEmail(email: String): Either<DbException, UserEntity>
     suspend fun findByIds(ids: List<UUID>): List<UserEntity>
     suspend fun isUserActive(id: UserId): Boolean
+    suspend fun setLastLogin(id: UserId)
 
 }
 
@@ -55,7 +53,7 @@ class UserRepositoryImpl(
     }
 
     suspend fun createUser(user: User): User? {
-        return template.insert(user.toEntity()).awaitSingleOrNull()?.toDomain()
+        return template.insert(user.toEntity()).awaitFirstOrNull()?.toDomain()
     }
 
     override suspend fun deleteUser(id: UserId): Either<DbException, Unit> {
@@ -102,9 +100,19 @@ class UserRepositoryImpl(
             """
            select id, active from users_table where active is true and id = :id
        """.trimIndent()
-        ).bind("id", id.value).fetch().awaitOneOrNull()
+        ).bind("id", id.value).fetch().first().awaitFirstOrNull()
 
         return userResult != null
+    }
+
+    override suspend fun setLastLogin(id: UserId) {
+        dbClient.sql(
+            """
+           insert into last_login_table (user_id, last_login)
+            values (:id,:time)
+            on conflict (user_id) do update set last_login = :time
+       """.trimIndent()
+        ).bind("id", id.value).bind("time", OffsetDateTime.now()).await()
     }
 }
 

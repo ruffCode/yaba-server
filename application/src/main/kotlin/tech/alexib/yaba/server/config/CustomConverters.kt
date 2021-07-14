@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.convert.converter.Converter
 import org.springframework.data.convert.ReadingConverter
 import org.springframework.data.convert.WritingConverter
+import org.springframework.data.r2dbc.convert.EnumWriteSupport
+import tech.alexib.yaba.domain.user.UserRole
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.util.UUID
@@ -25,6 +27,7 @@ class CustomConverters(
         OffsetDateTimeToInstantConverter(),
         LocalDateToDateConverter(),
         JavaLocalDateToKtLocalDateConverter(),
+        UserRoleWritingConverter()
     )
 
     @WritingConverter
@@ -55,5 +58,8 @@ class CustomConverters(
         override fun convert(source: java.time.LocalDate): LocalDate =
             LocalDate(source.year, source.monthValue, source.dayOfMonth)
     }
+
+    @WritingConverter
+    class UserRoleWritingConverter:EnumWriteSupport<UserRole>()
 
 }
