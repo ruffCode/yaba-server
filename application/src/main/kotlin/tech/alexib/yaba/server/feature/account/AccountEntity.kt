@@ -24,7 +24,9 @@ data class AccountEntity(
     @Column("current_balance")
     val currentBalance: Double,
     @Column("available_balance")
-    val availableBalance: Double,
+    val availableBalance: Double? = null,
+    @Column("credit_limit")
+    val creditLimit: Double? = null,
     @Column("iso_currency_code")
     val isoCurrencyCode: String? = null,
     @Column("unofficial_currency_code")
@@ -71,6 +73,7 @@ data class AccountEntity(
         officialName = officialName,
         currentBalance = currentBalance,
         availableBalance = availableBalance,
+        creditLimit = creditLimit,
         isoCurrencyCode = isoCurrencyCode,
         unofficialCurrencyCode = unofficialCurrencyCode,
         type = AccountType.valueOf(type),
@@ -94,7 +97,8 @@ fun AccountInsertRequest.toEntity(itemId: UUID) = AccountEntity(
     mask = account.mask ?: "",
     officialName = account.officialName,
     currentBalance = account.balances.current,
-    availableBalance = account.balances.available ?: 0.0,
+    availableBalance = account.balances.available,
+    creditLimit = account.balances.limit,
     type = account.type.name,
     subtype = account.subtype?.name ?: "",
     hidden = false
@@ -107,7 +111,8 @@ fun tech.alexib.plaid.client.model.Account.toEntity(itemId: UUID) = AccountEntit
     mask = mask ?: "",
     officialName = officialName,
     currentBalance = balances.current,
-    availableBalance = balances.available ?: 0.0,
+    availableBalance = balances.available,
+    creditLimit = balances.limit,
     type = type.name,
     subtype = subtype?.name ?: "",
 )

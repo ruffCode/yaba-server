@@ -21,7 +21,6 @@ import org.springframework.data.relational.core.query.Query.query
 import org.springframework.r2dbc.BadSqlGrammarException
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.await
-import org.springframework.r2dbc.core.awaitSingle
 import org.springframework.r2dbc.core.bind
 import org.springframework.r2dbc.core.flow
 import org.springframework.stereotype.Repository
@@ -82,12 +81,14 @@ class AccountRepositoryImpl(
 
             client.sql(
                 """
-            insert into accounts_table (item_id, plaid_account_id, name, mask, official_name, current_balance, available_balance, iso_currency_code, unofficial_currency_code, type, subtype)
-             values (:itemId,:accountId,:name,:mask,:officialName,:current,:available,:iso,:unofficial,:type,:subtype)
+            insert into accounts_table (item_id, plaid_account_id, name, mask, official_name, current_balance,
+             available_balance, iso_currency_code, unofficial_currency_code, type, subtype,credit_limit)
+             values (:itemId,:accountId,:name,:mask,:officialName,:current,:available,:iso,:unofficial,:type,:subtype,:creditLimit)
              on conflict (plaid_account_id)
              do update set 
              current_balance = :current,
-             available_balance = :available
+             available_balance = :available,
+             credit_limit = :creditLimit
              returning *
         """.trimIndent()
             )
@@ -101,6 +102,7 @@ class AccountRepositoryImpl(
                 .bind("iso", entity.isoCurrencyCode)
                 .bind("unofficial", entity.unofficialCurrencyCode)
                 .bind("type", entity.type)
+                .bind("creditLimit", entity.creditLimit)
                 .bind("subtype", entity.subtype).map { row, _ -> AccountEntity.fromRow(row) }.first().awaitFirst()
         } catch (e: Exception) {
             when (e) {
@@ -180,7 +182,7 @@ class AccountRepositoryImpl(
             """
               select * from accounts where id = :id
           """.trimIndent()
-        ).bind("id", id).map { row -> r2dbcConverter.read(AccountEntity::class.java, row) }.awaitSingle()
+        ).bind("id", id).map { row -> r2dbcConverter.read(AccountEntity::class.java, row) }.one().awaitFirst()
     }
 }
 

@@ -1,21 +1,39 @@
 CREATE EXTENSION if not exists pg_trgm;
+
+DO
+$$
+    BEGIN
+        CREATE TYPE user_role AS ENUM ( 'USER', 'ADMIN');
+    EXCEPTION
+        WHEN duplicate_object THEN null;
+    END
+$$;
+
 CREATE TABLE users_table
 (
-    id         uuid                 DEFAULT gen_random_uuid() PRIMARY KEY,
-    username   text UNIQUE NOT NULL,
-    password   text        not null default '',
-    created_at timestamptz          default now(),
-    updated_at timestamptz          default now()
+    id          uuid                 DEFAULT gen_random_uuid() PRIMARY KEY,
+    email       text UNIQUE NOT NULL,
+    password    text        not null default '',
+    verified    bool        not null default true,
+    reset_token text                 default null,
+    active      bool        not null default true,
+    role        text                 default 'USER',
+    created_at  timestamptz          default now(),
+    updated_at  timestamptz          default now()
 );
 
-CREATE VIEW users
+
+
+CREATE or REPLACE VIEW users
 AS
 SELECT id,
-       username,
+       email,
+       users_table.active,
+       users_table.verified,
        created_at,
-       updated_at
+       updated_at,
+       users_table.role
 FROM users_table;
-
 
 CREATE TABLE items_table
 (
@@ -25,6 +43,8 @@ CREATE TABLE items_table
     plaid_item_id        text UNIQUE NOT NULL,
     plaid_institution_id text        NOT NULL,
     status               text        NOT NULL,
+    linked               boolean     default true,
+    times_unlinked       smallint    default 0,
     created_at           timestamptz default now(),
     updated_at           timestamptz default now()
 );
@@ -47,16 +67,17 @@ CREATE TABLE accounts_table
 (
     id                       uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
     item_id                  uuid REFERENCES items_table (id) ON DELETE CASCADE,
-    plaid_account_id         text UNIQUE NOT NULL,
-    name                     text        NOT NULL,
-    mask                     text        NOT NULL,
+    plaid_account_id         text UNIQUE     NOT NULL,
+    name                     text            NOT NULL,
+    mask                     text            NOT NULL,
     official_name            text,
-    current_balance          numeric(28, 10),
+    current_balance          numeric(28, 10) NOT NULL,
     available_balance        numeric(28, 10),
+    credit_limit             numeric(28, 10),
     iso_currency_code        text,
     unofficial_currency_code text,
-    type                     text        NOT NULL,
-    subtype                  text        NOT NULL,
+    type                     text            NOT NULL,
+    subtype                  text            NOT NULL,
     hidden                   bool        default false,
     created_at               timestamptz default now(),
     updated_at               timestamptz default now()
@@ -74,6 +95,7 @@ SELECT a.id,
        a.official_name,
        a.current_balance,
        a.available_balance,
+       a.credit_limit,
        a.iso_currency_code,
        a.unofficial_currency_code,
        a.type,
@@ -98,6 +120,8 @@ CREATE TABLE transactions_table
     amount                   numeric(28, 10) NOT NULL,
     iso_currency_code        text,
     unofficial_currency_code text,
+    merchant_name            text        default null,
+    category_id              int         default null,
     date                     date            NOT NULL,
     pending                  boolean         NOT NULL,
     account_owner            text,
@@ -105,7 +129,7 @@ CREATE TABLE transactions_table
     updated_at               timestamptz default now()
 );
 
-CREATE VIEW transactions
+create or replace VIEW transactions
 AS
 SELECT t.id,
        t.plaid_transaction_id,
@@ -125,9 +149,11 @@ SELECT t.id,
        t.pending,
        t.account_owner,
        t.created_at,
-       t.updated_at
+       t.updated_at,
+       t.merchant_name
 FROM transactions_table t
          LEFT JOIN accounts a ON t.account_id = a.id;
+
 
 
 CREATE TABLE link_events_table
@@ -172,60 +198,17 @@ create table if not exists user_push_tokens
     token   text primary key,
     user_id uuid not null,
     foreign key (user_id) references users_table (id)
+        on delete cascade
 );
 
 
-drop view users;
-
-alter table users_table
-    rename username to email;
-
-alter table users_table
-    add column verified bool not null default true;
-
-alter table users_table
-    add column reset_token text default null;
-
-alter table users_table
-    add column active bool not null default true;
-
-CREATE or REPLACE VIEW users
-AS
-SELECT id,
-       email,
-       users_table.active,
-       users_table.verified,
-       created_at,
-       updated_at
-FROM users_table;
-alter table users_table
-    alter column verified set default false;
-
-alter table items_table
-    add column linked bool default true;
-
-CREATE OR REPLACE VIEW items
-AS
-SELECT id,
-       plaid_item_id,
-       user_id,
-       plaid_access_token,
-       plaid_institution_id,
-       status,
-       created_at,
-       updated_at,
-       linked
-FROM items_table;
-
-alter table items_table
-    add column times_unlinked smallint default 0;
 
 create or replace function increment_times_unlinked() returns trigger
     language plpgsql
 as
 $$
 BEGIN
-    if new.linked=false and old.linked= true then
+    if new.linked = false and old.linked = true then
         NEW.times_unlinked = OLD.times_unlinked + 1;
     end if;
     RETURN NEW;
@@ -259,68 +242,17 @@ create table if not exists categories
     hierarchy text[]          not null
 );
 
-alter table transactions_table
-    add column if not exists merchant_name text default null;
-
-alter table transactions_table
-    add column if not exists category_id int default null;
-
-create or replace VIEW transactions
-AS
-SELECT t.id,
-       t.plaid_transaction_id,
-       t.account_id,
-       a.plaid_account_id,
-       a.item_id,
-       a.plaid_item_id,
-       a.user_id,
-       t.category,
-       t.subcategory,
-       t.type,
-       t.name,
-       t.amount,
-       t.iso_currency_code,
-       t.unofficial_currency_code,
-       t.date,
-       t.pending,
-       t.account_owner,
-       t.created_at,
-       t.updated_at,
-       t.merchant_name
-FROM transactions_table t
-         LEFT JOIN accounts a ON t.account_id = a.id;
 
 create table if not exists transaction_updates
 (
-    id      uuid default gen_random_uuid() primary key,
-    user_id uuid not null,
-    added   text[],
-    removed text[],
+    id         uuid        default gen_random_uuid() primary key,
+    user_id    uuid not null,
+    added      text[],
+    removed    text[],
     created_at timestamptz default now(),
     foreign key (user_id) references users_table (id)
         on delete cascade
 );
-
-DO $$ BEGIN
-    CREATE TYPE user_role AS ENUM( 'USER', 'ADMIN');
-EXCEPTION
-    WHEN duplicate_object THEN null;
-END $$;
-
-alter table users_table
-add column role text default 'USER';
-
-DROP VIEW IF EXISTS users;
-CREATE or REPLACE VIEW users
-AS
-SELECT id,
-       email,
-       users_table.active,
-       users_table.verified,
-       created_at,
-       updated_at,
-       users_table.role
-FROM users_table;
 
 create table if not exists last_login_table
 (
@@ -329,10 +261,3 @@ create table if not exists last_login_table
     foreign key (user_id) references users_table (id)
         on delete cascade
 );
-
-alter table user_push_tokens
-    drop constraint user_push_tokens_user_id_fkey,
-    add constraint user_push_tokens_user_id_fkey
-        foreign key (user_id)
-            references users_table (id)
-            on delete cascade;

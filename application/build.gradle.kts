@@ -1,14 +1,14 @@
 import org.springframework.boot.gradle.tasks.bundling.BootBuildImage
 
 plugins {
-    id("org.springframework.boot") version "2.5.0"
+    id("org.springframework.boot") version "2.5.2"
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
     kotlin("jvm")
     kotlin("plugin.spring") version "1.5.10"
     kotlin("kapt")
 //    id("org.springframework.experimental.aot") version "0.10.0-SNAPSHOT"
     id("com.expediagroup.graphql") version "4.1.1"
-    kotlin("plugin.serialization") version "1.5.0"
+    kotlin("plugin.serialization") version "1.5.10"
     id("com.github.johnrengelman.shadow") version "7.0.0"
 
 
@@ -33,7 +33,7 @@ configurations {
 //}
 
 extra["testcontainersVersion"] = "1.15.3"
-val kotestVersion = "4.5.0"
+val kotestVersion = "4.6.1"
 dependencies {
     implementation(project(":domain"))
     implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
@@ -48,9 +48,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     implementation("com.expediagroup:graphql-kotlin-spring-server:4.1.1")
     implementation("com.expediagroup:graphql-kotlin-hooks-provider:4.1.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.2.0")
-    implementation("io.github.microutils:kotlin-logging:2.0.6")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.2.1")
+    implementation("io.github.microutils:kotlin-logging:2.0.10")
     implementation("io.r2dbc:r2dbc-pool")
     implementation("io.r2dbc:r2dbc-postgresql")
     implementation("org.postgresql:postgresql")
@@ -71,7 +71,7 @@ dependencies {
     testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
     testImplementation("io.kotest:kotest-extensions-spring:4.4.3")
     testImplementation("com.ninja-squad:springmockk:3.0.1")
-    testImplementation("app.cash.turbine:turbine:0.5.0-rc1")
+    testImplementation("app.cash.turbine:turbine:0.5.2")
 
 }
 
@@ -96,19 +96,4 @@ graphql {
 
 tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
     archiveBaseName.set("yaba-server")
-
 }
-
-tasks.register("checkProps"){
-//    project.properties.forEach { t, any ->
-//        println("""
-//            $t : $any
-//
-//        """.trimIndent())
-//    }
-
-    val version:String by project
-    val dockerImageName:String by project
-    println(dockerImageName)
-}
-
