@@ -33,7 +33,7 @@ services:
       APP_SECRET: ${APP_SECRET}
       SPRING_PROFILES_ACTIVE: prod
     volumes:
-      - "./application/build/libs/application-0.1.7-SNAPSHOT.jar:/app.jar"
+      - "./application/build/libs/application-0.1.8-SNAPSHOT.jar:/app.jar"
     command: [ 'java', '-jar', '/app.jar' ]
     logging:
       options:
