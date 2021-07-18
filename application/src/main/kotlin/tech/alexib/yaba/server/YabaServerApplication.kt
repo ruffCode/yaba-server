@@ -11,6 +11,7 @@ import graphql.GraphqlErrorException
 import graphql.execution.DataFetcherExceptionHandler
 import graphql.execution.DataFetcherExceptionHandlerParameters
 import graphql.execution.DataFetcherExceptionHandlerResult
+import io.sentry.Sentry
 import mu.KotlinLogging
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.http.HttpMessageConverters
@@ -28,23 +29,13 @@ import tech.alexib.yaba.server.graphql.schema.CustomDirectiveWiringFactory
 import tech.alexib.yaba.server.graphql.schema.CustomSchemaGeneratorHooks
 import tech.alexib.yaba.server.util.YabaException
 
-//@Configuration
-//class SerializerConfig :WebFluxConfigurer{
-//
-//    override fun configureHttpMessageCodecs(configurer: ServerCodecConfigurer) {
-//        super.configureHttpMessageCodecs(configurer)
-//    }
-//
-//    @Bean
-//    fun converter(): KotlinSerializationJsonDecoder = KotlinSerializationJsonDecoder(jSerializer)
-//}
-
 @SpringBootApplication
 class YabaServerApplication {
     @Bean
     fun additionalConverters(): HttpMessageConverters {
         return HttpMessageConverters(KotlinSerializationJsonHttpMessageConverter(jSerializer))
     }
+
     @Bean
     fun dataFetcherExceptionHandler(): DataFetcherExceptionHandler = CustomDataFetcherExceptionHandler()
 
@@ -60,7 +51,6 @@ class YabaServerApplication {
 
     @Bean
     fun apolloSubscriptionHooks(): ApolloSubscriptionHooks = MySubscriptionHooks()
-
 
 }
 

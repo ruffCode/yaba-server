@@ -57,6 +57,7 @@ dependencies {
     implementation("com.auth0:java-jwt:3.14.0")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("tech.alexib:plaid-kotlin:0.0.21")
+    implementation("io.sentry:sentry-spring-boot-starter:5.0.1")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     kapt("org.springframework.boot:spring-boot-configuration-processor")
     implementation("com.google.firebase:firebase-admin:7.3.0")

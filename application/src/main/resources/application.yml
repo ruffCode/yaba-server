@@ -52,3 +52,6 @@ spring:
 
 service-account:
   path: sa.json
+
+sentry:
+  dsn: https://c04f38de27db4a36895fc3dfe4cee212@o921828.ingest.sentry.io/5870106
