@@ -11,9 +11,14 @@ spring:
       max-life-time: 5
   application:
     name: YABA
-
 #  profiles:
 #    active: test
+
+logging.level:
+  org.springframework.r2dbc: debug
+  org.springframework.data.r2dbc: debug
+  web: warn
+
 db:
   username: ${POSTGRES_USER:yaba}
   password: ${POSTGRES_PASSWORD:yaba}
@@ -42,6 +47,8 @@ graphql:
 
 service-account:
   path: sa1.json
+logging:
+  level:
 
 ---
 
@@ -55,3 +62,8 @@ service-account:
 
 sentry:
   dsn: https://c04f38de27db4a36895fc3dfe4cee212@o921828.ingest.sentry.io/5870106
+
+logging.level:
+  org.springframework.r2dbc: warn
+  org.springframework.data.r2dbc: warn
+  web: error

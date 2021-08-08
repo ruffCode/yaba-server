@@ -1,7 +1,7 @@
 import org.springframework.boot.gradle.tasks.bundling.BootBuildImage
 
 plugins {
-    id("org.springframework.boot") version "2.5.2"
+    id("org.springframework.boot") version "2.5.3"
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
     kotlin("jvm")
     kotlin("plugin.spring") version "1.5.10"
@@ -25,14 +25,7 @@ configurations {
     }
 }
 
-//repositories {
-//    maven { url = uri("https://repo.spring.io/snapshot") }
-//    mavenCentral()
-//    maven { url = uri("https://repo.spring.io/milestone") }
-//
-//}
-
-extra["testcontainersVersion"] = "1.15.3"
+extra["testcontainersVersion"] = "1.16.0"
 val kotestVersion = "4.6.1"
 dependencies {
     implementation(project(":domain"))
@@ -46,8 +39,8 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
-    implementation("com.expediagroup:graphql-kotlin-spring-server:4.1.1")
-    implementation("com.expediagroup:graphql-kotlin-hooks-provider:4.1.1")
+    implementation("com.expediagroup:graphql-kotlin-spring-server:5.0.0-alpha.3")
+    implementation("com.expediagroup:graphql-kotlin-hooks-provider:5.0.0-alpha.3")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.2.1")
     implementation("io.github.microutils:kotlin-logging:2.0.10")
@@ -72,7 +65,7 @@ dependencies {
     testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
     testImplementation("io.kotest:kotest-extensions-spring:4.4.3")
     testImplementation("com.ninja-squad:springmockk:3.0.1")
-    testImplementation("app.cash.turbine:turbine:0.5.2")
+    testImplementation("app.cash.turbine:turbine:0.6.0")
 
 }
 

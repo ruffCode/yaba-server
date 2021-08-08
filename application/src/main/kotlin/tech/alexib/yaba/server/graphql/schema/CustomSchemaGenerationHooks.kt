@@ -41,6 +41,7 @@ class CustomSchemaGeneratorHooks(override val wiringFactory: KotlinDirectiveWiri
         UUID::class -> graphqlUUIDType
         LocalDate::class -> localDateType
         BigDecimal::class -> Scalars.GraphQLBigDecimal
+        Long::class -> Scalars.GraphQLLong
         else -> null
     }
 

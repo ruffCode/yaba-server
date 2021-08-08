@@ -25,9 +25,6 @@ data class Institution(
 typealias GetInstitutionFromPlaid = suspend (InstitutionId) -> Either<InstitutionError.InvalidInstitutionId, Institution>
 typealias SaveInstitution = suspend (Institution) -> Institution
 typealias GetInstitutionFromDb = suspend (InstitutionId) -> Institution?
-//typealias GetOrCreateInstitution =
-//        suspend (InstitutionId, GetInstitutionFromDb, GetInstitutionFromPlaid, SaveInstitution) ->
-//        Either<InstitutionError, Institution>
 
 sealed class InstitutionError {
     object InvalidInstitutionId : InstitutionError()
@@ -41,25 +38,16 @@ fun interface GetOrCreateInstitution {
 suspend inline fun InstitutionId.getOrCreate(
     crossinline getInstitutionFromDb: GetInstitutionFromDb,
     crossinline getInstitutionFromPlaid: GetInstitutionFromPlaid,
-    crossinline saveInstitution: SaveInstitution
+    crossinline saveInstitution: SaveInstitution,
 ): Either<InstitutionError, Institution> {
     val id = this
     val existingInstitution = getInstitutionFromDb(id)
-    println("existingInstitution is null ${ existingInstitution == null}")
     return if (existingInstitution != null) {
         existingInstitution.right()
     } else {
         println("saving from plaid")
         getInstitutionFromPlaid(id).map { saveInstitution(it) }
     }
-
-//    return either {
-//        val existingInstitution = getInstitutionFromDb(id)
-//
-//
-//        (existingInstitution?.right() ?: getInstitutionFromPlaid(id).map { saveInstitution(it) }).bind()
-//
-//    }
 }
 
 @Serializable
@@ -100,24 +88,11 @@ enum class Product {
 
 @Serializable
 enum class CountryCode {
-    @SerialName("US")
     US,
-
-    @SerialName("GB")
     GB,
-
-    @SerialName("ES")
     ES,
-
-    @SerialName("NL")
     NL,
-
-    @SerialName("FR")
     FR,
-
-    @SerialName("IE")
     IE,
-
-    @SerialName("CA")
     CA
 }
