@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Alexi Bre
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package tech.alexib.yaba.server.dto
 
 import kotlinx.serialization.Contextual
@@ -73,7 +88,6 @@ enum class WebhookErrorCode {
     PRODUCTS_NOT_SUPPORTED
 }
 
-
 @Serializable
 data class ItemWebhookRequest(
     @SerialName("item_id")
@@ -98,7 +112,8 @@ enum class ItemWebhookCode {
     WEBHOOK_UPDATE_ACKNOWLEDGED,
 
     /**
-     * Fired when an error is encountered with an Item. The error can be resolved by having the user go through Link’s update mode.
+     * Fired when an error is encountered with an Item. The error can be resolved by having the user go through
+     * Link’s update mode.
      */
     ERROR,
 
@@ -112,7 +127,8 @@ enum class ItemWebhookCode {
 
     /**
      * Fired when an Item’s access consent is expiring in 7 days. Some Items have explicit expiration times
-     * and we try to relay this when possible to reduce service disruption. This can be resolved by having the user go through Link’s update mode.
+     * and we try to relay this when possible to reduce service disruption. This can be resolved by having the user
+     * go through Link’s update mode.
      */
     PENDING_EXPIRATION
 }
@@ -202,7 +218,7 @@ data class AuthWebhookRequest(
     val error: GenericWebhookError? = null
 ) : WebhookRequest()
 
-fun TransactionWebhookCode.toLocalDate():LocalDate = when (this) {
+fun TransactionWebhookCode.toLocalDate(): LocalDate = when (this) {
     TransactionWebhookCode.INITIAL_UPDATE -> LocalDate.now().minusDays(30)
     TransactionWebhookCode.HISTORICAL_UPDATE -> LocalDate.now().minusYears(2L)
     TransactionWebhookCode.DEFAULT_UPDATE -> LocalDate.now().minusDays(14)

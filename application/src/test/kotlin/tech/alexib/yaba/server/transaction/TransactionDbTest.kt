@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Alexi Bre
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package tech.alexib.yaba.server.transaction
 
 import io.r2dbc.spi.ConnectionFactory
@@ -65,7 +80,8 @@ class TransactionDbTest : BaseIntegrationTest() {
         itemRepository.createItem(ItemStub.item.toEntity())
         accountRepository.createAccounts(
             ItemStub.item.plaidItemId,
-            accounts = accounts.accounts.map { AccountInsertRequest(it) }).toList()
+            accounts = accounts.accounts.map { AccountInsertRequest(it) }
+        ).toList()
     }
 
     val client: DatabaseClient by lazy {
@@ -79,39 +95,35 @@ class TransactionDbTest : BaseIntegrationTest() {
 
     @AfterAll
     fun breakDown() {
-
         runBlocking {
             client.sql(
                 """
-            delete from users_table where id is not null 
-        """.trimIndent()
+            delete from users_table where id is not null
+                """.trimIndent()
             ).await()
 
             client.sql(
                 """
-                delete from items_table where id is not null 
-            """.trimIndent()
+                delete from items_table where id is not null
+                """.trimIndent()
             ).await()
 
             client.sql(
                 """
                 delete from accounts_table where id is not null
-            """.trimIndent()
+                """.trimIndent()
             ).await()
         }
-
-
     }
 
     @Order(0)
     @Test
     fun insertTransactions() {
-
         runBlocking {
             val toSave = transactions.map { transaction ->
                 val accountId =
                     accountRepository.findByPlaidAccountId(transaction.accountId).findOrNull { it.id != null }?.id
-                        ?: throw Exception("accountid not found")
+                        ?: throw IllegalArgumentException("account id not found")
                 TransactionTableEntity.fromPlaid(transaction, accountId.accountId())
             }
             try {
@@ -127,56 +139,46 @@ class TransactionDbTest : BaseIntegrationTest() {
     @Order(1)
     @Test
     fun findsByPlaidTransactionIds() {
-
         runBlocking {
             kotlin.runCatching {
                 val ids = transactions.map { it.transactionId }
 
                 val plaidIds = transactionRepository.findByPlaidIds(ids).toList()
                 assert(plaidIds.size == ids.size)
-
             }.getOrElse {
                 when (it) {
                     is BadSqlGrammarException -> {
                         logger.error { "bad grammar" }
                         logger.error { it.sql }
                         logger.error { it.r2dbcException }
-                        throw  it
+                        throw it
                     }
-
                 }
                 logger.error { it }
                 throw it
             }
-
         }
     }
 
     @Order(1)
     @Test
     fun findsByPlaidTransactionIdsWithEmptyList() {
-
         runBlocking {
             kotlin.runCatching {
-
-
                 val plaidIds = transactionRepository.findByPlaidIds(emptyList()).toList()
                 assert(plaidIds.isEmpty())
-
             }.getOrElse {
                 when (it) {
                     is BadSqlGrammarException -> {
                         logger.error { "bad grammar" }
                         logger.error { it.sql }
                         logger.error { it.r2dbcException }
-                        throw  it
+                        throw it
                     }
-
                 }
                 logger.error { it }
                 throw it
             }
-
         }
     }
 
@@ -208,7 +210,6 @@ class TransactionDbTest : BaseIntegrationTest() {
     @Test
     fun insertsTransactionUpdate() {
         runBlocking {
-
             val transactions = transactionRepository.findByItemId(ItemStub.item.id).toList()
             val added = transactions.take(10).map { it.toDto().id }
             val removed = transactions.takeLast(10).map { it.toDto().id }
@@ -217,7 +218,7 @@ class TransactionDbTest : BaseIntegrationTest() {
             val updateIds = client.sql(
                 """
                 select * from transaction_updates
-            """.trimIndent()
+                """.trimIndent()
             ).map { row -> row["id"] as UUID }.flow().toList()
 
             assert(updateIds.isNotEmpty())
@@ -229,7 +230,6 @@ class TransactionDbTest : BaseIntegrationTest() {
             Assertions.assertNotNull(update?.removed)
             Assertions.assertEquals(10, update?.added?.size)
             Assertions.assertEquals(10, update?.removed?.size)
-
         }
     }
 }

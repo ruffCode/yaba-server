@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Alexi Bre
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package tech.alexib.yaba.server.feature.transaction
 
 import io.r2dbc.spi.ConnectionFactory
@@ -48,7 +63,6 @@ class TransactionRepositoryImpl(
     private val client: DatabaseClient by lazy { DatabaseClient.create(connectionFactory) }
     private val template: R2dbcEntityTemplate by lazy { R2dbcEntityTemplate(connectionFactory) }
 
-
     override fun create(transactions: List<TransactionTableEntity>): Flow<TransactionTableEntity> {
         return transactions.asFlow().map { create(it) }
     }
@@ -68,11 +82,10 @@ class TransactionRepositoryImpl(
     }
 
     override fun findByAccountId(accountId: AccountId): Flow<TransactionEntity> {
-
         return client.sql(
             """
           SELECT * FROM transactions WHERE account_id = :id ORDER BY date DESC
-      """.trimIndent()
+            """.trimIndent()
         ).bind("id", accountId.value).map { row -> r2dbcConverter.read(TransactionEntity::class.java, row) }.flow()
     }
 
@@ -80,7 +93,7 @@ class TransactionRepositoryImpl(
         return client.sql(
             """
     SELECT * FROM transactions WHERE item_id = :id ORDER BY date DESC
-""".trimIndent()
+            """.trimIndent()
         ).bind("id", itemId.value).map { row -> r2dbcConverter.read(TransactionEntity::class.java, row) }.flow()
     }
 
@@ -88,9 +101,8 @@ class TransactionRepositoryImpl(
         return client.sql(
             """
             SELECT * FROM transactions WHERE user_id = :id ORDER BY date DESC
-        """.trimIndent()
+            """.trimIndent()
         ).bind("id", userId.value).map { row -> r2dbcConverter.read(TransactionEntity::class.java, row) }.flow()
-
     }
 
     override fun findInRange(plaidItemId: String, startDate: LocalDate, endDate: LocalDate): Flow<TransactionEntity> {
@@ -106,7 +118,7 @@ class TransactionRepositoryImpl(
         AND date <= :end
       ORDER BY
         date DESC
-""".trimIndent()
+            """.trimIndent()
         ).bind("id", plaidItemId)
             .bind("start", startDate)
             .bind("end", endDate).map { row -> r2dbcConverter.read(TransactionEntity::class.java, row) }.flow()
@@ -117,7 +129,7 @@ class TransactionRepositoryImpl(
             client.sql(
                 """
                 delete from transactions_table where plaid_transaction_id = :id
-            """.trimIndent()
+                """.trimIndent()
             ).bind("id", it).await()
         }
     }
@@ -126,7 +138,7 @@ class TransactionRepositoryImpl(
         return if (ids.isNotEmpty()) client.sql(
             """
             select * from transactions where id in (:ids)
-        """.trimIndent()
+            """.trimIndent()
         ).bind("ids", ids).map { row -> r2dbcConverter.read(TransactionEntity::class.java, row) }.flow().toList()
         else emptyList()
     }
@@ -135,7 +147,7 @@ class TransactionRepositoryImpl(
         return if (ids.isNotEmpty()) client.sql(
             """
             select * from transactions where transactions.item_id in (:ids)
-        """.trimIndent()
+            """.trimIndent()
         ).bind("ids", ids).map { row -> r2dbcConverter.read(TransactionEntity::class.java, row) }.flow()
             .toList()
         else emptyList()
@@ -146,7 +158,7 @@ class TransactionRepositoryImpl(
             client.sql(
                 """
             select * from transactions where transactions.account_id in (:ids)
-        """.trimIndent()
+                """.trimIndent()
             ).bind("ids", ids).map { row -> r2dbcConverter.read(TransactionEntity::class.java, row) }
                 .flow().toList()
         } else emptyList()
@@ -156,7 +168,7 @@ class TransactionRepositoryImpl(
         client.sql(
             """
             delete from transactions where item_id = :itemId
-        """.trimIndent()
+            """.trimIndent()
         ).bind("itemId", itemId.value).await()
     }
 
@@ -165,12 +177,8 @@ class TransactionRepositoryImpl(
             client.sql(
                 """
            select id from transactions where transactions.plaid_transaction_id in (:ids)
-       """.trimIndent()
+                """.trimIndent()
             ).bind("ids", plaidIds).map { row -> row["id"] as UUID }.flow()
         } else emptyFlow()
     }
 }
-
-
-
-

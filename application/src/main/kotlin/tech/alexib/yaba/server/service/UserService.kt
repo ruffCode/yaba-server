@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Alexi Bre
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package tech.alexib.yaba.server.service
 
 import mu.KotlinLogging
@@ -24,7 +39,6 @@ import tech.alexib.yaba.server.util.badRequest
 import tech.alexib.yaba.server.util.serverError
 import tech.alexib.yaba.server.util.unauthorized
 
-
 interface UserService {
     suspend fun login(loginRequest: LoginRequest): User
     suspend fun register(request: RegisterUserRequest): User
@@ -39,9 +53,7 @@ private val logger = KotlinLogging.logger {}
 @Component
 class UserServiceImpl(private val authUtil: AuthUtil, private val userRepository: UserRepository) : UserService {
 
-
     override suspend fun login(loginRequest: LoginRequest): User {
-
         return loginRequest.login(
             ::findByEmail,
             authUtil::generateToken,
@@ -58,7 +70,6 @@ class UserServiceImpl(private val authUtil: AuthUtil, private val userRepository
             userRepository.setLastLogin(it.id)
             it
         })
-
     }
 
     private suspend fun findByEmail(email: Email): User? = userRepository.findByEmail(email.value).fold({
@@ -87,7 +98,6 @@ class UserServiceImpl(private val authUtil: AuthUtil, private val userRepository
     }
 
     override suspend fun register(request: RegisterUserRequest): User {
-
         return RegisterUserCommand(request).register(
             ::createUser
         ) {
@@ -98,8 +108,12 @@ class UserServiceImpl(private val authUtil: AuthUtil, private val userRepository
             )
         }.fold({ error ->
             when (error) {
-                UserRegistrationError.PasswordTooShort -> badRequest("Password too short - must be at least 12 characters")
-                UserRegistrationError.DuplicateEmail -> badRequest("User with email ${request.email.value} already registered")
+                UserRegistrationError.PasswordTooShort -> badRequest(
+                    "Password too short - must be at least 12 characters"
+                )
+                UserRegistrationError.DuplicateEmail -> badRequest(
+                    "User with email ${request.email.value} already registered"
+                )
                 UserRegistrationError.InvalidEmail -> badRequest("Invalid email: ${request.email.value}")
             }
         }, {

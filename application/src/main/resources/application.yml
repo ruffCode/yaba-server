@@ -47,8 +47,7 @@ graphql:
 
 service-account:
   path: sa1.json
-logging:
-  level:
+
 
 ---
 

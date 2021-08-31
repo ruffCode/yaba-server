@@ -1,5 +1,19 @@
+/*
+ * Copyright 2021 Alexi Bre
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package tech.alexib.yaba.server.user
-
 
 import io.kotest.matchers.shouldBe
 import io.r2dbc.spi.ConnectionFactory
@@ -17,7 +31,6 @@ import org.junit.jupiter.api.TestMethodOrder
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.await
-import org.springframework.security.crypto.password.PasswordEncoder
 import tech.alexib.yaba.domain.user.UserRole
 import tech.alexib.yaba.server.UsersStub
 import tech.alexib.yaba.server.config.BaseIntegrationTest
@@ -26,7 +39,6 @@ import tech.alexib.yaba.server.entity.LinkEventId
 import tech.alexib.yaba.server.feature.user.UserRepository
 import tech.alexib.yaba.server.feature.user.toEntity
 import tech.alexib.yaba.server.repository.LinkEventRepository
-import tech.alexib.yaba.server.service.UserService
 import java.util.UUID
 
 private val logger = KotlinLogging.logger { }
@@ -36,16 +48,10 @@ private val logger = KotlinLogging.logger { }
 class UserDbTest : BaseIntegrationTest() {
 
     @Autowired
-    lateinit var userService: UserService
-
-    @Autowired
     lateinit var userRepository: UserRepository
 
     @Autowired
     lateinit var linkEventRepository: LinkEventRepository
-
-    @Autowired
-    lateinit var passwordEncoder: PasswordEncoder
 
     @Autowired
     lateinit var connectionFactory: ConnectionFactory
@@ -61,22 +67,18 @@ class UserDbTest : BaseIntegrationTest() {
         runBlocking {
             client.sql(
                 """
-            delete from users_table where id is not null 
-        """.trimIndent()
+            delete from users_table where id is not null
+                """.trimIndent()
             ).await()
         }
     }
 
-
     @Test
     fun `retrieves user by id`() {
         runBlocking {
-
             userRepository.findById(usersStub[1].id).fold({ exception ->
                 fail(exception.message)
-
             }, { it.id.shouldBe(usersStub[1].id.value) })
-
         }
     }
 
@@ -88,7 +90,6 @@ class UserDbTest : BaseIntegrationTest() {
             }, {
                 Assert.assertEquals(it.id, usersStub[2].id.value)
                 Assert.assertEquals(it.role, UserRole.USER.name)
-
             })
         }
     }
@@ -102,13 +103,11 @@ class UserDbTest : BaseIntegrationTest() {
         )
 
         runBlocking {
-
             linkEventRepository.create(linkEvent.toEntity()).fold({
                 fail("link event not inserted")
             }, {
                 assertEquals(linkEvent.id, LinkEventId(it.id))
             })
-
         }
     }
 
@@ -117,7 +116,6 @@ class UserDbTest : BaseIntegrationTest() {
         runBlocking {
             userRepository.deleteUser(usersStub[0].id)
             userRepository.findById(usersStub.first().id).fold({}, { fail { "expected left" } })
-
         }
     }
 
@@ -128,7 +126,6 @@ class UserDbTest : BaseIntegrationTest() {
             }
         }
     }
-
 }
 
 val usersStub = UsersStub.users

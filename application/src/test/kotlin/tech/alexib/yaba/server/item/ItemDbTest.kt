@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Alexi Bre
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package tech.alexib.yaba.server.item
 
 import io.r2dbc.spi.ConnectionFactory
@@ -21,14 +36,12 @@ import tech.alexib.yaba.domain.item.itemId
 import tech.alexib.yaba.server.assertIsError
 import tech.alexib.yaba.server.assertIsOk
 import tech.alexib.yaba.server.config.BaseIntegrationTest
-
 import tech.alexib.yaba.server.feature.item.ItemEntity
 import tech.alexib.yaba.server.feature.item.ItemException
 import tech.alexib.yaba.server.feature.item.ItemRepository
 import tech.alexib.yaba.server.feature.user.UserRepository
 import tech.alexib.yaba.server.feature.user.toEntity
 import tech.alexib.yaba.server.user.usersStub
-
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
@@ -53,19 +66,16 @@ class ItemDbTest : BaseIntegrationTest() {
         runBlocking {
             client.sql(
                 """
-            delete from users_table where id is not null 
-        """.trimIndent()
+            delete from users_table where id is not null
+                """.trimIndent()
             ).await()
 
             client.sql(
                 """
-                delete from items_table where id is not null 
-            """.trimIndent()
+                delete from items_table where id is not null
+                """.trimIndent()
             ).await()
-
         }
-
-
     }
 
     @Test
@@ -134,7 +144,6 @@ class ItemDbTest : BaseIntegrationTest() {
             Assertions.assertEquals(1, updated2.timesUnlinked)
             Assertions.assertTrue(updated2.linked)
             itemRepository.unlink(itemStub.id.itemId(), usersStub.first().id)
-
         }
     }
 
@@ -147,7 +156,6 @@ class ItemDbTest : BaseIntegrationTest() {
         }
     }
 }
-
 
 private val itemStub = ItemEntity(
     userId = usersStub.first().id.value,

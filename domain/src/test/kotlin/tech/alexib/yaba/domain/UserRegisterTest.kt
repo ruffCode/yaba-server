@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Alexi Bre
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package tech.alexib.yaba.domain
 
 import io.kotest.matchers.booleans.shouldBeFalse
@@ -18,7 +33,6 @@ import tech.alexib.yaba.domain.user.UserRegistrationError
 import tech.alexib.yaba.domain.user.isValid
 import tech.alexib.yaba.domain.user.register
 import tech.alexib.yaba.domain.user.validate
-
 
 class UserRegisterTest {
 
@@ -45,7 +59,6 @@ class UserRegisterTest {
 
     @Test
     fun `registers user`() {
-
         val command = RegisterUserCommand(userRegistration)
 
         runBlocking {
@@ -61,11 +74,10 @@ class UserRegisterTest {
                 )
             }.fold(
                 { fail { "Expected success" } },
-                { })
+                { }
+            )
         }
-
     }
-
 
     @Test
     fun `fails to register user`() {
@@ -85,14 +97,13 @@ class UserRegisterTest {
             }
                 .fold(
                     { it.shouldBeSameInstanceAs(UserRegistrationError.PasswordTooShort) },
-                    { fail { "Expected left" } })
+                    { fail { "Expected left" } }
+                )
         }
     }
 
-
     @Test
     fun `successfully validates user registration`() {
-
         runBlocking {
             userRegistration.validate(
                 { false },
@@ -101,14 +112,12 @@ class UserRegisterTest {
             ).fold({
                 fail { "Expected valid user registration" }
             }, {
-
             })
         }
     }
 
     @Test
     fun `fails to validate user registration`() {
-
         runBlocking {
             userRegistration.validate(
                 { true },
@@ -123,7 +132,6 @@ class UserRegisterTest {
     }
 }
 
-
 private class AuthUtilStub : AuthUtil {
     override fun encodePassword(password: String): String = password.reversed()
 
@@ -132,13 +140,9 @@ private class AuthUtilStub : AuthUtil {
 
     override fun passwordsMatch(plainPassword: String, encodedPassword: String): Boolean =
         plainPassword == encodedPassword
-
 }
 
 object UserStubs {
 
     fun existsByEmail(exists: Boolean) = ExistsByEmail { exists }
 }
-
-
-

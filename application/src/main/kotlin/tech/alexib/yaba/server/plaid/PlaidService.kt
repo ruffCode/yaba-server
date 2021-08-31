@@ -1,5 +1,19 @@
+/*
+ * Copyright 2021 Alexi Bre
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package tech.alexib.yaba.server.plaid
-
 
 import arrow.core.Either
 import kotlinx.coroutines.delay
@@ -38,9 +52,7 @@ import tech.alexib.plaid.client.model.TransactionsGetRequestOptions
 import tech.alexib.plaid.client.model.TransactionsGetResponse
 import tech.alexib.yaba.domain.user.UserId
 import tech.alexib.yaba.server.config.PlaidConfig
-
 import java.time.LocalDate
-
 
 private val logger = KotlinLogging.logger { }
 
@@ -59,13 +71,15 @@ interface PlaidService {
     suspend fun getInstitution(id: String): InstitutionsGetByIdResponse
 
     suspend fun fetchTransactions(
-        accessToken: String, startDate: LocalDate, endDate: LocalDate, accountIds: List<String>
+        accessToken: String,
+        startDate: LocalDate,
+        endDate: LocalDate,
+        accountIds: List<String>
     ): TransactionsGetResponse
 }
 
 @Component
 class PlaidServiceImpl(private val plaidConfig: PlaidConfig) : PlaidService {
-
 
     private val plaidApiConfiguration = PlaidApiConfiguration(
         ClientId(plaidConfig.clientId),
@@ -75,12 +89,10 @@ class PlaidServiceImpl(private val plaidConfig: PlaidConfig) : PlaidService {
     )
     private val plaidClient = PlaidClient(plaidApiConfiguration)
 
-
     override suspend fun createLinkToken(
         userId: UserId,
         accessToken: String?
     ): Either<PlaidError, LinkTokenCreateResponse> {
-
         val request = LinkTokenCreateRequest(
             language = "en",
             clientName = "YABA Client",
@@ -122,20 +134,20 @@ class PlaidServiceImpl(private val plaidConfig: PlaidConfig) : PlaidService {
                 AccountsGetRequest(
                     accessToken = accessToken,
 
-                    )
+                )
             ).accounts
         }.mapLeft {
             it as PlaidError
         }
-
     }
-
 
     suspend fun institutions(count: Int = 200, offset: Int = 0): InstitutionsGetResponse {
         require(count < 2000)
         return plaidClient.institutionsGet(
             InstitutionsGetRequest(
-                count = count, offset = offset, options = InstitutionsGetRequestOptions(
+                count = count,
+                offset = offset,
+                options = InstitutionsGetRequestOptions(
                     includeOptionalMetadata = true
                 ),
                 countryCodes = listOf(CountryCode.US)
@@ -185,7 +197,6 @@ class PlaidServiceImpl(private val plaidConfig: PlaidConfig) : PlaidService {
                 nextOffset,
                 nextResult
             )
-
         } else {
             result.copy(
                 accounts = response?.accounts?.plus(result.accounts) ?: result.accounts,
@@ -194,14 +205,12 @@ class PlaidServiceImpl(private val plaidConfig: PlaidConfig) : PlaidService {
         }
     }
 
-
     override suspend fun fetchTransactions(
         accessToken: String,
         startDate: LocalDate,
         endDate: LocalDate,
         accountIds: List<String>
     ): TransactionsGetResponse {
-
         val options = TransactionsGetRequestOptions(
             offset = 0,
             count = 100,
@@ -239,4 +248,3 @@ class PlaidServiceImpl(private val plaidConfig: PlaidConfig) : PlaidService {
         }
     }
 }
-

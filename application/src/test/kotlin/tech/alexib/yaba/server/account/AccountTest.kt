@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Alexi Bre
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package tech.alexib.yaba.server.account
 
 import kotlinx.coroutines.flow.Flow
@@ -15,7 +30,6 @@ import tech.alexib.yaba.server.AccountStub
 import tech.alexib.yaba.server.ItemStub
 import tech.alexib.yaba.server.UsersStub
 import tech.alexib.yaba.server.config.BaseIntegrationTest
-
 import tech.alexib.yaba.server.feature.account.AccountEntity
 import tech.alexib.yaba.server.feature.account.AccountInsertRequest
 import tech.alexib.yaba.server.feature.account.AccountRepository
@@ -52,7 +66,6 @@ class AccountTest : BaseIntegrationTest() {
 
     @Test
     fun insertAccounts() {
-
         runBlocking {
             try {
                 createAccounts().toList()
@@ -67,6 +80,7 @@ class AccountTest : BaseIntegrationTest() {
     private suspend fun createAccounts(): Flow<AccountEntity> {
         return accountRepository.createAccounts(
             ItemStub.item.plaidItemId,
-            accounts = accounts.accounts.map { AccountInsertRequest(it) })
+            accounts = accounts.accounts.map { AccountInsertRequest(it) }
+        )
     }
 }

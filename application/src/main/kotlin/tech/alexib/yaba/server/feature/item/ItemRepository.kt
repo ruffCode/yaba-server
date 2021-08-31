@@ -1,5 +1,19 @@
+/*
+ * Copyright 2021 Alexi Bre
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package tech.alexib.yaba.server.feature.item
-
 
 import arrow.core.Either
 import arrow.core.left
@@ -49,7 +63,6 @@ interface ItemRepository {
     suspend fun deleteByAccessToken(accessToken: String)
 }
 
-
 @Repository
 class ItemRepositoryImpl(
     private val connectionFactory: ConnectionFactory,
@@ -69,7 +82,6 @@ class ItemRepositoryImpl(
             }
         }
     }
-
 
     override suspend fun findById(id: ItemId): Either<ItemException.NotFound, ItemEntity> {
         return template.selectOne(query(where("id").`is`(id.value)), ItemEntity::class.java)
@@ -93,7 +105,8 @@ class ItemRepositoryImpl(
                     .and(
                         where("user_id").`is`(userId.value)
                     )
-            ), ItemEntity::class.java
+            ),
+            ItemEntity::class.java
         )
             .awaitFirstOrNull()?.right()
             ?: ItemException.NotFound.left()
@@ -108,12 +121,11 @@ class ItemRepositoryImpl(
     override fun findByUserId(userId: UserId): Flow<ItemEntity> =
         template.select(query(where("user_id").`is`(userId.value)), ItemEntity::class.java).asFlow()
 
-
     override suspend fun updateStatus(id: UUID, status: String): ItemEntity {
         return client.sql(
             """
             update items set status = :status where id = :id returning *
-        """.trimIndent()
+            """.trimIndent()
         ).bind("status", status).bind("id", id).map(::mapEntity).first()
             .awaitSingle()
     }
@@ -122,7 +134,7 @@ class ItemRepositoryImpl(
         client.sql(
             """
             delete from items_table where id = :id
-        """.trimIndent()
+            """.trimIndent()
         ).bind("id", id).fetch().rowsUpdated().awaitFirstOrNull()
     }
 
@@ -130,7 +142,7 @@ class ItemRepositoryImpl(
         return client.sql(
             """
           select * from items where id in (:ids)
-      """.trimIndent()
+            """.trimIndent()
         ).bind("ids", ids).map(::mapEntity).flow().toList()
     }
 
@@ -138,7 +150,7 @@ class ItemRepositoryImpl(
         return client.sql(
             """
            select * from items
-       """.trimIndent()
+            """.trimIndent()
         ).map(::mapEntity).flow()
     }
 
@@ -146,7 +158,7 @@ class ItemRepositoryImpl(
         client.sql(
             """
            update items_table set linked = false where id = :itemId and user_id = :userId
-       """.trimIndent()
+            """.trimIndent()
         ).bind("itemId", itemId.value).bind("userId", userId.value).await()
     }
 
@@ -157,10 +169,10 @@ class ItemRepositoryImpl(
     ): ItemEntity {
         return client.sql(
             """
-            update items set (linked,plaid_access_token) = (true,:accessToken) 
+            update items set (linked,plaid_access_token) = (true,:accessToken)
             where plaid_institution_id = :institutionId and user_id = :userId
             returning *
-        """.trimIndent()
+            """.trimIndent()
         ).bind("institutionId", institutionId.value).bind("userId", userId.value)
             .bind("accessToken", plaidAccessToken.value).map(::mapEntity)
             .flow().first()
@@ -172,7 +184,7 @@ class ItemRepositoryImpl(
         client.sql(
             """
             delete from items where plaid_access_token = :accessToken
-        """.trimIndent()
+            """.trimIndent()
         ).bind("accessToken", accessToken).await()
     }
 }
@@ -183,6 +195,7 @@ sealed class ItemException {
     data class Fatal(val exception: Exception) : ItemException()
 }
 
+@Suppress("UnusedPrivateMember")
 private fun handleSqlException(e: Exception): ItemException {
     return when (e) {
         is DataIntegrityViolationException -> {
@@ -197,4 +210,3 @@ private fun handleSqlException(e: Exception): ItemException {
         else -> throw e
     }
 }
-

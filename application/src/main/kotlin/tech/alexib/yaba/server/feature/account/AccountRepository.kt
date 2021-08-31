@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Alexi Bre
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package tech.alexib.yaba.server.feature.account
 
 import arrow.core.Either
@@ -51,46 +66,43 @@ class AccountRepositoryImpl(
     private val connectionFactory: ConnectionFactory,
     private val itemRepository: ItemRepository,
     private val tx: Tx,
-    private val r2dbcConverter: R2dbcConverter
+    private val r2dbcConverter: R2dbcConverter,
 ) : AccountRepository {
 
     private val template: R2dbcEntityTemplate by lazy { R2dbcEntityTemplate(connectionFactory) }
     private val client: DatabaseClient by lazy { DatabaseClient.create(connectionFactory) }
 
-
     override suspend fun createAccounts(
         plaidItemId: String,
-        accounts: List<AccountInsertRequest>
+        accounts: List<AccountInsertRequest>,
     ): Flow<AccountEntity> {
-
         val ids = itemRepository.findAll().toList().map { it.id }
         logger.info { "IDS $ids" }
-        val itemId = itemRepository.findByPlaidId(plaidItemId).fold({ throw Exception("not found") }, {
-            it.id
-        })
+        val itemId = itemRepository.findByPlaidId(plaidItemId)
+            .fold({ throw IllegalArgumentException("not found") }, {
+                it.id
+            })
 
         return tx.invoke {
             accounts.map { it.toEntity(itemId) }.asFlow().map { create(it) }
         }
-
-
     }
 
     override suspend fun create(entity: AccountEntity): AccountEntity {
         return try {
-
             client.sql(
                 """
             insert into accounts_table (item_id, plaid_account_id, name, mask, official_name, current_balance,
              available_balance, iso_currency_code, unofficial_currency_code, type, subtype,credit_limit)
-             values (:itemId,:accountId,:name,:mask,:officialName,:current,:available,:iso,:unofficial,:type,:subtype,:creditLimit)
+             values (:itemId,:accountId,:name,:mask,:officialName,:current,:available,:iso,:unofficial,:type,
+             :subtype,:creditLimit)
              on conflict (plaid_account_id)
-             do update set 
+             do update set
              current_balance = :current,
              available_balance = :available,
              credit_limit = :creditLimit
              returning *
-        """.trimIndent()
+                """.trimIndent()
             )
                 .bind("itemId", entity.itemId)
                 .bind("accountId", entity.plaidAccountId)
@@ -114,13 +126,12 @@ class AccountRepositoryImpl(
                 else -> throw e
             }
         }
-
-
     }
 
     override suspend fun findByPlaidAccountId(plaidAccountId: String): Either<Unit, AccountEntity> {
         return template.selectOne(
-            query(where("plaid_account_id").`is`(plaidAccountId)), AccountEntity::class.java
+            query(where("plaid_account_id").`is`(plaidAccountId)),
+            AccountEntity::class.java
         )
             .awaitFirstOrNull()?.right() ?: Unit.left()
     }
@@ -128,28 +139,26 @@ class AccountRepositoryImpl(
     override suspend fun findByItemId(itemId: ItemId): Flow<AccountEntity> {
         return client.sql(
             """
-            select *  from accounts where item_id = :itemId 
-        """.trimIndent()
+            select *  from accounts where item_id = :itemId
+            """.trimIndent()
         ).bind("itemId", itemId.value).map { row -> r2dbcConverter.read(AccountEntity::class.java, row) }
             .all().asFlow()
     }
 
     override suspend fun findByUserId(userId: UserId): Flow<AccountEntity> {
-
         return client.sql(
             """
-            select *  from accounts where user_id = :userId 
-        """.trimIndent()
+            select *  from accounts where user_id = :userId
+            """.trimIndent()
         ).bind("userId", userId.value).map { row -> r2dbcConverter.read(AccountEntity::class.java, row) }
             .all().asFlow()
-
     }
 
     override suspend fun findByIds(ids: List<UUID>): List<AccountEntity> {
         return client.sql(
             """
            select * from accounts where id in (:ids)
-       """.trimIndent()
+            """.trimIndent()
         ).bind("ids", ids).map { row -> r2dbcConverter.read(AccountEntity::class.java, row) }.flow().toList()
     }
 
@@ -157,7 +166,7 @@ class AccountRepositoryImpl(
         client.sql(
             """
           update accounts_table set hidden = :hide where plaid_account_id = :id
-      """.trimIndent()
+            """.trimIndent()
         ).bind("hide", hide).bind("id", plaidAccountId).await()
     }
 
@@ -165,7 +174,7 @@ class AccountRepositoryImpl(
         client.sql(
             """
           update accounts_table set hidden = :hide where id = :id
-      """.trimIndent()
+            """.trimIndent()
         ).bind("hide", hide).bind("id", id).await()
     }
 
@@ -173,7 +182,7 @@ class AccountRepositoryImpl(
         client.sql(
             """
             delete from accounts_table where item_id = :itemId
-        """.trimIndent()
+            """.trimIndent()
         ).bind("itemId", itemId.value).await()
     }
 
@@ -181,7 +190,7 @@ class AccountRepositoryImpl(
         return client.sql(
             """
               select * from accounts where id = :id
-          """.trimIndent()
+            """.trimIndent()
         ).bind("id", id).map { row -> r2dbcConverter.read(AccountEntity::class.java, row) }.one().awaitFirst()
     }
 }

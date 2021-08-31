@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Alexi Bre
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package tech.alexib.yaba.server.entity
 
 import io.r2dbc.spi.Row
@@ -30,7 +45,7 @@ data class LinkEventEntity(
     @Column("created_at")
     val createdAt: OffsetDateTime = OffsetDateTime.now()
 ) {
-    companion object{
+    companion object {
         fun toDomain(row: Row): LinkEvent {
             return LinkEvent(
                 id = (row["id"] as UUID).toLinkEventId(),
@@ -84,8 +99,4 @@ data class LinkEvent(
 @JvmInline
 value class LinkEventId(val value: UUID)
 
-
 fun UUID.toLinkEventId() = LinkEventId(this)
-
-
-//{id=c7c567fd-15e4-491f-9af1-863fb4b9639e, type=success, user_id=bc324bc7-6acc-496a-93c0-9eb5417e66e6, link_session_id=8dded02b-dd79-4f08-a15d-9e84c6016ebf, request_id=null, error_type=null, error_code=null, created_at=2021-03-27T01:36:31.933775-04:00}

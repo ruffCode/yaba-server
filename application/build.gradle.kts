@@ -1,7 +1,7 @@
 import org.springframework.boot.gradle.tasks.bundling.BootBuildImage
 
 plugins {
-    id("org.springframework.boot") version "2.5.3"
+    id("org.springframework.boot") version "2.5.4"
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
     kotlin("jvm")
     kotlin("plugin.spring") version "1.5.10"
@@ -10,12 +10,9 @@ plugins {
     id("com.expediagroup.graphql") version "4.1.1"
     kotlin("plugin.serialization") version "1.5.10"
     id("com.github.johnrengelman.shadow") version "7.0.0"
-
-
 }
 
 group = "tech.alexib"
-
 
 java.sourceCompatibility = JavaVersion.VERSION_16
 
@@ -24,7 +21,7 @@ configurations {
         extendsFrom(configurations.annotationProcessor.get())
     }
 }
-
+extra["springCloudVersion"] = "2020.0.3"
 extra["testcontainersVersion"] = "1.16.0"
 val kotestVersion = "4.6.1"
 dependencies {
@@ -43,22 +40,25 @@ dependencies {
     implementation("com.expediagroup:graphql-kotlin-hooks-provider:5.0.0-alpha.3")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.2.1")
-    implementation("io.github.microutils:kotlin-logging:2.0.10")
+    implementation("io.github.microutils:kotlin-logging:2.0.11")
     implementation("io.r2dbc:r2dbc-pool")
     implementation("io.r2dbc:r2dbc-postgresql")
     implementation("org.postgresql:postgresql")
-    implementation("com.auth0:java-jwt:3.14.0")
+    implementation("com.auth0:java-jwt:3.18.1")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("tech.alexib:plaid-kotlin:0.0.21")
-    implementation("io.sentry:sentry-spring-boot-starter:5.0.1")
+    implementation("io.sentry:sentry-spring-boot-starter:5.1.1")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     kapt("org.springframework.boot:spring-boot-configuration-processor")
-    implementation("com.google.firebase:firebase-admin:7.3.0")
+    implementation("com.google.firebase:firebase-admin:8.0.1")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.projectreactor:reactor-test")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
     testImplementation("org.testcontainers:r2dbc")
+    testImplementation("org.testcontainers:vault")
+//    implementation("org.springframework.cloud:spring-cloud-starter-vault-config")
+//    implementation("org.springframework.cloud:spring-cloud-vault-config-databases")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion")
     testImplementation("io.kotest:kotest-property-jvm:$kotestVersion")
@@ -66,17 +66,17 @@ dependencies {
     testImplementation("io.kotest:kotest-extensions-spring:4.4.3")
     testImplementation("com.ninja-squad:springmockk:3.0.1")
     testImplementation("app.cash.turbine:turbine:0.6.0")
-
 }
 
 dependencyManagement {
     imports {
         mavenBom("org.testcontainers:testcontainers-bom:${property("testcontainersVersion")}")
+//        mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
     }
 }
 
 tasks.withType<BootBuildImage> {
-    val dockerImageName:String by project
+    val dockerImageName: String by project
     imageName = "yaba-server:$version"
 //    builder = "paketobuildpacks/builder:tiny"
     builder = "paketobuildpacks/builder:base"

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Alexi Bre
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package tech.alexib.yaba.server.security
 
 import com.auth0.jwt.JWT
@@ -8,15 +23,13 @@ import org.springframework.stereotype.Service
 import tech.alexib.yaba.domain.user.Email
 import tech.alexib.yaba.domain.user.User
 import tech.alexib.yaba.domain.user.UserId
-import tech.alexib.yaba.domain.user.UserRole
 import tech.alexib.yaba.server.config.JwtConfig
 import tech.alexib.yaba.server.feature.user.UserDto
 
 @Service
-class JWTService(private val jwtConfig: JwtConfig) {
+class JWTService(jwtConfig: JwtConfig) {
 
     private val secret = jwtConfig.secret
-    private val refresh = jwtConfig.refresh
 
     fun accessToken(userDto: UserDto): String = generate(userDto)
 
@@ -58,6 +71,4 @@ class JWTService(private val jwtConfig: JwtConfig) {
     companion object {
         private val defaultRoles = arrayOf(SimpleGrantedAuthority("USER").toString())
     }
-
-    private fun UserRole.toClaims() = arrayOf(SimpleGrantedAuthority(this.name).toString())
 }

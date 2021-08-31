@@ -1,16 +1,30 @@
+/*
+ * Copyright 2021 Alexi Bre
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package tech.alexib.yaba.server.config
 
 import io.r2dbc.postgresql.PostgresqlConnectionConfiguration
 import io.r2dbc.postgresql.PostgresqlConnectionFactory
-import io.r2dbc.postgresql.codec.EnumCodec
 import mu.KotlinLogging
+import org.flywaydb.core.Flyway
+import org.flywaydb.core.api.configuration.FluentConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
-import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.PostgreSQLContainer
-import reactor.core.publisher.Mono
-import tech.alexib.yaba.domain.user.UserRole
+import org.testcontainers.containers.wait.strategy.Wait
 
 private val logger = KotlinLogging.logger { }
 
@@ -19,13 +33,11 @@ class IntegrationTestConfiguration {
 
     @Bean(initMethod = "start", destroyMethod = "stop")
     fun postgresqlContainer(): PostgreSQLContainer<Nothing> = PostgreSQLContainer<Nothing>("postgres:13-alpine").apply {
-//        withInitScript(INIT_SCRIPT)
         withUsername(USERNAME)
         withPassword(PASSWORD)
         withDatabaseName(DB_NAME)
         withUrlParam("TC_IMAGE_TAG", "13.1")
-
-        withClasspathResourceMapping("db/init.sql", "/docker-entrypoint-initdb.d/init.sql", BindMode.READ_ONLY)
+//        withClasspathResourceMapping("db/init.sql", "/docker-entrypoint-initdb.d/init.sql", BindMode.READ_ONLY)
     }
 
     @Bean
@@ -38,26 +50,21 @@ class IntegrationTestConfiguration {
             .username(pgContainer.username)
             .password(pgContainer.password)
             .build()
-    )
+    ).also { flyway(pgContainer) }
 
-//    @Bean(initMethod = "migrate")
-//    @Primary
-//    fun flyway(pgContainer: PostgreSQLContainer<Nothing>): Flyway {
-//
-//        val url = "jdbc:" + "tc:postgresql://localhost:5432/yaba"
-//        val user = "yaba"
-//        val password = "yaba"
-//        val config = Flyway
-//            .configure()
-//            .dataSource(url, user, password)
-//        return Flyway(config)
-//    }
+    fun flyway(pgContainer: PostgreSQLContainer<Nothing>) {
+        with(pgContainer) {
+            waitingFor(Wait.forHealthcheck())
+            val url = "jdbc:postgresql://${pgContainer.host}:${pgContainer.firstMappedPort}/yaba"
+            FluentConfiguration().dataSource(url, "yaba", "yaba")
+                .locations("classpath:/db/migration")
+                .apply { Flyway(this).migrate() }
+        }
+    }
 
     companion object {
         private const val DB_NAME = "yaba"
         private const val USERNAME = "yaba"
         private const val PASSWORD = "yaba"
-        private const val INIT_SCRIPT = "db/init.sql"
     }
 }
-

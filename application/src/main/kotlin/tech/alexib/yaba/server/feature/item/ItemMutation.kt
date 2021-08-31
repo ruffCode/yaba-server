@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Alexi Bre
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package tech.alexib.yaba.server.feature.item
 
 import com.expediagroup.graphql.server.operations.Mutation
@@ -25,14 +40,16 @@ class ItemMutation(
     private val accountRepository: AccountRepository,
     private val institutionService: InstitutionService,
     private val transactionService: TransactionService,
-    private val itemService: ItemService
+    private val itemService: ItemService,
 ) : Mutation {
 
+    @Suppress("LongMethod")
     @Authenticated
     suspend fun itemCreate(context: YabaGraphQLContext, input: ItemCreateInput): ItemCreateResponse {
         val userId = context.id()
         itemRepository.findByInstitutionId(
-            input.institutionId, userId
+            input.institutionId,
+            userId
         ).fold({
         }, {
             throw YabaException("You have already linked an item at this institution.").toGraphql()
@@ -58,7 +75,8 @@ class ItemMutation(
         val institution = institutionService.getOrCreate(InstitutionId(itemEntity.institutionId)).fold(
             {
                 throw YabaException("Invalid institution id.").toGraphql()
-            }, {
+            },
+            {
                 it
             }
         )
@@ -86,11 +104,16 @@ class ItemMutation(
         })
 
         return ItemCreateResponse(
-            name = institution.name, itemId = itemEntity.id, accounts = accounts.map {
+            name = institution.name,
+            itemId = itemEntity.id,
+            accounts = accounts.map {
                 AccountInfo(
-                    plaidAccountId = it.plaidAccountId, name = it.name, mask = it.mask
+                    plaidAccountId = it.plaidAccountId,
+                    name = it.name,
+                    mask = it.mask
                 )
-            }, logo = institution.logo
+            },
+            logo = institution.logo
         )
     }
 
@@ -102,7 +125,6 @@ class ItemMutation(
             )
         }
         return itemRepository.updateStatus(itemId, status).toDto()
-
     }
 
     @Authenticated
@@ -127,25 +149,22 @@ class ItemMutation(
         transactionService.initial(ItemId(itemId))
         return true
     }
-
 }
-
 
 data class ItemCreateInput(
     val publicToken: String,
-    val institutionId: String
+    val institutionId: String,
 )
-
 
 data class AccountInfo(
     val plaidAccountId: String,
     val name: String,
-    val mask: String
+    val mask: String,
 )
 
 data class ItemCreateResponse(
     val name: String,
     val itemId: UUID,
     val logo: String,
-    val accounts: List<AccountInfo>
+    val accounts: List<AccountInfo>,
 )

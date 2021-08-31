@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Alexi Bre
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package tech.alexib.yaba.domain.common
 
 import kotlinx.datetime.Instant
@@ -19,9 +34,7 @@ import java.time.LocalDate as JavaLocalDate
 object InstantSerializer : KSerializer<Instant> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Instant", PrimitiveKind.STRING)
 
-
     override fun deserialize(decoder: Decoder): Instant = Instant.parse(decoder.decodeString())
-
 
     override fun serialize(encoder: Encoder, value: Instant) = encoder.encodeString(value.toString())
 }
@@ -38,13 +51,14 @@ object LocalDateSerializer : KSerializer<LocalDate> {
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializer(forClass = java.time.LocalDate::class)
-object JavaLocalDateSerializer :KSerializer<JavaLocalDate>{
+object JavaLocalDateSerializer : KSerializer<JavaLocalDate> {
     override fun deserialize(decoder: Decoder): JavaLocalDate = JavaLocalDate.parse(decoder.decodeString())
 
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("JavaLocalDate", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: JavaLocalDate) = encoder.encodeString(value.toString())
 }
+
 @OptIn(ExperimentalSerializationApi::class)
 @Serializer(forClass = UUID::class)
 object UUIDSerializer : KSerializer<UUID> {
@@ -53,9 +67,10 @@ object UUIDSerializer : KSerializer<UUID> {
 
     override fun serialize(encoder: Encoder, value: UUID) = encoder.encodeString(value.toString())
 }
+
 @OptIn(ExperimentalSerializationApi::class)
 @Serializer(forClass = OffsetDateTime::class)
-object OffsetDateTimeSerializer:KSerializer<OffsetDateTime>{
+object OffsetDateTimeSerializer : KSerializer<OffsetDateTime> {
     override fun deserialize(decoder: Decoder): OffsetDateTime =
         OffsetDateTime.parse(decoder.decodeString())
 
@@ -72,7 +87,6 @@ val serializerModule = SerializersModule {
     contextual(LocalDateSerializer)
     contextual(OffsetDateTimeSerializer)
     contextual(JavaLocalDateSerializer)
-
 }
 
 val jSerializer = Json {

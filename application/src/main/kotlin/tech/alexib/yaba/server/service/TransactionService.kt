@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Alexi Bre
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package tech.alexib.yaba.server.service
 
 import kotlinx.coroutines.flow.firstOrNull
@@ -34,14 +49,14 @@ class TransactionService(
     private val itemRepository: ItemRepository,
     private val accountRepository: AccountRepository,
     private val fcmService: FCMService,
-    private val transactionUpdatesRepository: TransactionUpdatesRepository
+    private val transactionUpdatesRepository: TransactionUpdatesRepository,
 ) {
 
     suspend fun updateTransactions(
         plaidItemId: PlaidItemId,
         startDate: LocalDate,
         endDate: LocalDate,
-        notifyUser: Boolean = false
+        notifyUser: Boolean = false,
     ) {
         val (accessToken, itemId) = itemRepository.findByPlaidId(plaidItemId.value).fold({
             notFound("No token for itemId $plaidItemId")
@@ -56,13 +71,14 @@ class TransactionService(
         }
     }
 
+    @Suppress("LongParameterList", "UnusedPrivateMember")
     private suspend fun handleUpdate(
         accessToken: String,
         startDate: LocalDate,
         endDate: LocalDate,
         plaidItemId: String,
         accountsNotHidden: List<String>,
-        notifyUser: Boolean = false
+        notifyUser: Boolean = false,
     ) {
         val result = plaidService.fetchTransactions(accessToken, startDate, endDate, accountsNotHidden)
         val accounts = result.accounts.map { AccountInsertRequest(it) }
@@ -93,7 +109,8 @@ class TransactionService(
             insertTransactionUpdate(
                 PlaidItemId(plaidItemId),
                 removed = transactionsToRemoveIds,
-                added = created.mapNotNull { it.id })
+                added = created.mapNotNull { it.id }
+            )
         }
     }
 
@@ -133,7 +150,7 @@ class TransactionService(
 
     suspend fun updateTransactionsOnDevice(
         userId: UserId,
-        updateId: UUID
+        updateId: UUID,
     ) {
         fcmService.sendTransactionsToUpdate(userId, updateId)
     }
@@ -152,7 +169,7 @@ class TransactionService(
 
     suspend fun notifyUserOfNewTransaction(
         userId: UserId,
-        transaction: TransactionTableEntity
+        transaction: TransactionTableEntity,
     ) {
         val name = transaction.merchantName ?: transaction.name
         val message = "$name - $${DecimalFormat("#,###.00").format(transaction.amount)}"
@@ -174,4 +191,3 @@ class TransactionService(
         }
     }
 }
-

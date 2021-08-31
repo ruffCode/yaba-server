@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Alexi Bre
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package tech.alexib.yaba.server.feature.user
 
 import arrow.core.Either
@@ -31,7 +46,6 @@ interface UserRepository {
     suspend fun findByIds(ids: List<UUID>): List<UserEntity>
     suspend fun isUserActive(id: UserId): Boolean
     suspend fun setLastLogin(id: UserId)
-
 }
 
 @Repository
@@ -80,7 +94,6 @@ class UserRepositoryImpl(
                 Query.query(where("email").`is`(email)),
                 UserEntity::class.java
             ).awaitFirstOrNull()?.right() ?: DbException.NotFound("User not found - username: $email").left()
-
         } catch (e: Exception) {
             DbException.SqlException(e.localizedMessage).left()
         }
@@ -91,7 +104,7 @@ class UserRepositoryImpl(
         return dbClient.sql(
             """
           select * from users_table where id in :ids
-      """.trimIndent()
+            """.trimIndent()
         ).bind("ids", ids).map { row -> r2dbcConverter.read(UserEntity::class.java, row) }.flow().toList()
     }
 
@@ -99,7 +112,7 @@ class UserRepositoryImpl(
         val userResult = dbClient.sql(
             """
            select id, active from users_table where active is true and id = :id
-       """.trimIndent()
+            """.trimIndent()
         ).bind("id", id.value).fetch().first().awaitFirstOrNull()
 
         return userResult != null
@@ -111,7 +124,7 @@ class UserRepositoryImpl(
            insert into last_login_table (user_id, last_login)
             values (:id,:time)
             on conflict (user_id) do update set last_login = :time
-       """.trimIndent()
+            """.trimIndent()
         ).bind("id", id.value).bind("time", OffsetDateTime.now()).await()
     }
 }

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Alexi Bre
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package tech.alexib.yaba.server.service
 
 import arrow.core.Either
@@ -38,7 +53,7 @@ class ItemServiceImpl(
     private val institutionService: InstitutionService,
     private val itemRepository: ItemRepository,
     private val accountRepository: AccountRepository,
-    private val transactionRepository: TransactionRepository
+    private val transactionRepository: TransactionRepository,
 ) : ItemService {
 
     override suspend fun linkItem(linkItemRequest: LinkItemRequest): Either<ItemCreateError, Item> {
@@ -58,7 +73,6 @@ class ItemServiceImpl(
     }
 
     override suspend fun unlinkItem(itemId: ItemId, userId: UserId) {
-
         itemRepository.unlink(itemId, userId)
 
         itemRepository.findById(itemId).map { itemEntity ->
@@ -66,14 +80,13 @@ class ItemServiceImpl(
             accountRepository.deleteByItemId(itemId)
             plaidService.removeItem(itemEntity.accessToken)
         }
-
     }
 
     private suspend fun relink(institutionId: InstitutionId, userId: UserId, plaidAccessToken: PlaidAccessToken): Item =
         itemRepository.relink(institutionId, userId, plaidAccessToken).toDomain()
 
-
-    private suspend fun exchangePublicToken(publicToken: PublicToken): Either<PlaidApiError, PublicTokenExchangeResponse> {
+    private suspend fun exchangePublicToken(publicToken: PublicToken):
+        Either<PlaidApiError, PublicTokenExchangeResponse> {
         return runCatching {
             plaidService.exchangeToken(publicToken.value).let {
                 PublicTokenExchangeResponse(PlaidAccessToken(it.accessToken), PlaidItemId(it.itemId))
@@ -81,17 +94,18 @@ class ItemServiceImpl(
         }.getOrElse { e ->
             when (e) {
                 is PlaidError -> PlaidApiError(e.errorMessage).left()
-                else -> throw  e
+                else -> throw e
             }
         }
     }
 
     private suspend fun getItemByInstitutionIdWithTimesUnlinked(
         institutionId: InstitutionId,
-        userId: UserId
+        userId: UserId,
     ): Either<Pair<Item, Int>, Unit> =
         itemRepository.findByInstitutionId(
-            institutionId.value, userId
+            institutionId.value,
+            userId
         ).fold({ Unit.right() }, {
             Pair(it.toDomain(), it.timesUnlinked).left()
         })
