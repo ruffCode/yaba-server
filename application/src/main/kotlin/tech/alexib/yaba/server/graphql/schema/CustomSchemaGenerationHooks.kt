@@ -18,8 +18,9 @@ package tech.alexib.yaba.server.graphql.schema
 import com.expediagroup.graphql.generator.directives.KotlinDirectiveWiringFactory
 import com.expediagroup.graphql.generator.hooks.SchemaGeneratorHooks
 import com.expediagroup.graphql.plugin.schema.hooks.SchemaGeneratorHooksProvider
-import graphql.Scalars
 import graphql.language.StringValue
+import graphql.scalars.ExtendedScalars.GraphQLBigDecimal
+import graphql.scalars.ExtendedScalars.GraphQLLong
 import graphql.schema.Coercing
 import graphql.schema.CoercingParseLiteralException
 import graphql.schema.CoercingParseValueException
@@ -54,8 +55,8 @@ class CustomSchemaGeneratorHooks(override val wiringFactory: KotlinDirectiveWiri
     override fun willGenerateGraphQLType(type: KType): GraphQLType? = when (type.classifier) {
         UUID::class -> graphqlUUIDType
         LocalDate::class -> localDateType
-        BigDecimal::class -> Scalars.GraphQLBigDecimal
-        Long::class -> Scalars.GraphQLLong
+        BigDecimal::class -> GraphQLBigDecimal
+        Long::class -> GraphQLLong
         else -> null
     }
 
@@ -119,7 +120,7 @@ private object UUIDCoercing : Coercing<UUID, String> {
         throw CoercingParseValueException("Expected valid UUID but was $input")
     }
 
-    override fun parseLiteral(input: Any): UUID? {
+    override fun parseLiteral(input: Any): UUID {
         val uuidString = (input as? StringValue)?.value
         return runCatching {
             UUID.fromString(uuidString)

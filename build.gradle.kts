@@ -2,12 +2,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 
 plugins {
-    kotlin("jvm") version "1.5.10"
-    id("com.gorylenko.gradle-git-properties") version "2.2.4"
-    id("org.jlleitschuh.gradle.ktlint") version "10.1.0"
-    id("org.jlleitschuh.gradle.ktlint-idea").version("10.1.0")
-    id("com.diffplug.spotless") version "5.14.2"
-    id("io.gitlab.arturbosch.detekt") version "1.18.0-RC3"
+    kotlin("jvm") version "1.5.21"
+    id("com.gorylenko.gradle-git-properties") version "2.3.1"
+    id("org.jlleitschuh.gradle.ktlint") version "10.2.0"
+    id("org.jlleitschuh.gradle.ktlint-idea").version("10.2.0")
+    id("com.diffplug.spotless") version "5.15.0"
+    id("io.gitlab.arturbosch.detekt") version "1.18.1"
 }
 
 group = "tech.alexib"
@@ -49,7 +49,7 @@ subprojects {
         android.set(false)
         outputToConsole.set(true)
         ignoreFailures.set(true)
-        enableExperimentalRules.set(true)
+        enableExperimentalRules.set(false)
         filter {
             exclude { projectDir.toURI().relativize(it.file.toURI()).path.contains("/generated/") }
             include("**/kotlin/**")

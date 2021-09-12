@@ -4,11 +4,11 @@ plugins {
     id("org.springframework.boot") version "2.5.4"
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
     kotlin("jvm")
-    kotlin("plugin.spring") version "1.5.10"
+    kotlin("plugin.spring") version "1.5.21"
     kotlin("kapt")
 //    id("org.springframework.experimental.aot") version "0.10.0-SNAPSHOT"
-    id("com.expediagroup.graphql") version "4.1.1"
-    kotlin("plugin.serialization") version "1.5.10"
+    id("com.expediagroup.graphql") version "5.0.0-alpha.4"
+    kotlin("plugin.serialization") version "1.5.21"
     id("com.github.johnrengelman.shadow") version "7.0.0"
 }
 
@@ -36,8 +36,9 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
-    implementation("com.expediagroup:graphql-kotlin-spring-server:5.0.0-alpha.3")
-    implementation("com.expediagroup:graphql-kotlin-hooks-provider:5.0.0-alpha.3")
+    implementation("com.expediagroup:graphql-kotlin-spring-server:5.0.0-alpha.4")
+    implementation("com.expediagroup:graphql-kotlin-hooks-provider:5.0.0-alpha.4")
+    implementation("com.graphql-java:graphql-java-extended-scalars:17.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.2.1")
     implementation("io.github.microutils:kotlin-logging:2.0.11")
@@ -47,7 +48,7 @@ dependencies {
     implementation("com.auth0:java-jwt:3.18.1")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("tech.alexib:plaid-kotlin:0.0.21")
-    implementation("io.sentry:sentry-spring-boot-starter:5.1.1")
+    implementation("io.sentry:sentry-spring-boot-starter:5.1.2")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     kapt("org.springframework.boot:spring-boot-configuration-processor")
     implementation("com.google.firebase:firebase-admin:8.0.1")
@@ -65,7 +66,7 @@ dependencies {
     testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
     testImplementation("io.kotest:kotest-extensions-spring:4.4.3")
     testImplementation("com.ninja-squad:springmockk:3.0.1")
-    testImplementation("app.cash.turbine:turbine:0.6.0")
+    testImplementation("app.cash.turbine:turbine:0.6.1")
 }
 
 dependencyManagement {
