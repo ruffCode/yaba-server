@@ -59,7 +59,7 @@ private val logger = KotlinLogging.logger { }
 interface PlaidService {
     suspend fun createLinkToken(
         userId: UserId,
-        accessToken: String? = null
+        accessToken: String? = null,
     ): Either<PlaidError, LinkTokenCreateResponse>
 
     suspend fun exchangeToken(publicToken: String): ItemPublicTokenExchangeResponse
@@ -74,7 +74,7 @@ interface PlaidService {
         accessToken: String,
         startDate: LocalDate,
         endDate: LocalDate,
-        accountIds: List<String>
+        accountIds: List<String>,
     ): TransactionsGetResponse
 }
 
@@ -84,14 +84,14 @@ class PlaidServiceImpl(private val plaidConfig: PlaidConfig) : PlaidService {
     private val plaidApiConfiguration = PlaidApiConfiguration(
         ClientId(plaidConfig.clientId),
         Secret(plaidConfig.secret),
-        baseUrl = BaseUrl.Sandbox,
+        baseUrl = if (plaidConfig.baseUrl.contains("develop")) BaseUrl.Development else BaseUrl.Sandbox,
         plaidVersion = PlaidVersion("2020-09-14")
     )
     private val plaidClient = PlaidClient(plaidApiConfiguration)
 
     override suspend fun createLinkToken(
         userId: UserId,
-        accessToken: String?
+        accessToken: String?,
     ): Either<PlaidError, LinkTokenCreateResponse> {
         val request = LinkTokenCreateRequest(
             language = "en",
@@ -177,7 +177,7 @@ class PlaidServiceImpl(private val plaidConfig: PlaidConfig) : PlaidService {
         request: TransactionsGetRequest,
         count: Int,
         offset: Int,
-        response: TransactionsGetResponse? = null
+        response: TransactionsGetResponse? = null,
     ): TransactionsGetResponse {
         val result = plaidClient.transactionsGet(request)
         return if (result.transactions.size == count) {
@@ -209,7 +209,7 @@ class PlaidServiceImpl(private val plaidConfig: PlaidConfig) : PlaidService {
         accessToken: String,
         startDate: LocalDate,
         endDate: LocalDate,
-        accountIds: List<String>
+        accountIds: List<String>,
     ): TransactionsGetResponse {
         val options = TransactionsGetRequestOptions(
             offset = 0,
