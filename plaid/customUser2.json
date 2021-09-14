@@ -1,0 +1,23 @@
+{
+  "seed": "xMzxT38tRz9vzhhDVUzBtQ5Y97225MecTjGfkV26Py6UkvHyvp7E9Wh6MHwqr7zndWP7weEEXE8CrXUKKbmYbZHX2r2qjaPDJY5",
+  "override_accounts": [
+    {
+      "type": "credit",
+      "subtype": "credit card",
+      "meta": {
+        "name": "yaba Platinum Credit Card",
+        "official_name": "yaba Platinum Credit Card",
+        "limit": 3500
+      }
+    },
+    {
+      "type": "depository",
+      "subtype": "checking",
+      "meta": {
+        "name": "yaba Select Checking",
+        "official_name": "yaba Select Checking"
+      }
+    }
+  ]
+}
+

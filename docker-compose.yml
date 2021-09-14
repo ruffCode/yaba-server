@@ -39,7 +39,7 @@ services:
       - no-new-privileges:true
   yaba-server:
     container_name: yabaServer
-    image: yaba-server:0.1.13-SNAPSHOT
+    image: yaba-server:0.1.14-SNAPSHOT
     network_mode: host
     security_opt:
       - no-new-privileges:true

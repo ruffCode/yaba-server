@@ -1,0 +1,51 @@
+{
+  "seed": "GyyZutnNfhbeaYQUpwZTxX53M86RPDb64jwbyCb3mNGh3QxHdPC9QqZvD3P8A2wVXvdzSjuWAeVKjFQNFaCJbaMxxwX8jUH8nJy",
+  "override_accounts": [
+    {
+      "type": "depository",
+      "subtype": "checking",
+      "meta": {
+        "name": "yaba Checking",
+        "official_name" : "yaba Platinum Checking"
+      }
+    },
+    {
+      "type": "depository",
+      "subtype": "savings",
+      "meta": {
+        "name": "yaba Savings",
+        "official_name" : "yaba Platinum Savings"
+      }
+    },
+    {
+      "type": "credit",
+      "subtype": "credit card",
+      "meta": {
+        "name": "yaba Credit Card",
+        "official_name" : "yaba Signature Select Credit Card",
+        "limit": 35000
+      }
+    },
+    {
+      "type": "loan",
+      "subtype": "auto",
+      "meta": {
+        "name": "yaba Auto Loan"
+      }
+    },
+    {
+      "type": "loan",
+      "subtype": "student",
+      "meta": {
+        "name": "yaba Student Loan"
+      }
+    },
+    {
+      "type": "investment",
+      "subtype": "401k",
+      "meta": {
+        "name": "yaba 401k"
+      }
+    }
+  ]
+}

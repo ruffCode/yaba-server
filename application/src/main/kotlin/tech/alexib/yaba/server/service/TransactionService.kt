@@ -135,7 +135,7 @@ class TransactionService(
     }
 
     suspend fun initial(itemId: ItemId) {
-        val startDate = LocalDate.now().minusDays(30)
+        val startDate = LocalDate.now().minusDays(10)
         val endDate = LocalDate.now()
         updateTransactions(itemId, startDate, endDate)
     }

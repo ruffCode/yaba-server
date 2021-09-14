@@ -47,6 +47,8 @@ import tech.alexib.plaid.client.model.LinkTokenCreateRequestUser
 import tech.alexib.plaid.client.model.LinkTokenCreateResponse
 import tech.alexib.plaid.client.model.PlaidError
 import tech.alexib.plaid.client.model.Products
+import tech.alexib.plaid.client.model.SandboxPublicTokenCreateRequest
+import tech.alexib.plaid.client.model.SandboxPublicTokenCreateRequestOptions
 import tech.alexib.plaid.client.model.TransactionsGetRequest
 import tech.alexib.plaid.client.model.TransactionsGetRequestOptions
 import tech.alexib.plaid.client.model.TransactionsGetResponse
@@ -88,6 +90,19 @@ class PlaidServiceImpl(private val plaidConfig: PlaidConfig) : PlaidService {
         plaidVersion = PlaidVersion("2020-09-14")
     )
     private val plaidClient = PlaidClient(plaidApiConfiguration)
+
+    suspend fun createSandboxToken() {
+        plaidClient.sandboxPublicTokenCreate(
+            SandboxPublicTokenCreateRequest(
+                initialProducts = listOf(Products.TRANSACTIONS, Products.AUTH),
+                institutionId = "ins_3",
+                options = SandboxPublicTokenCreateRequestOptions(
+                    webhook = plaidConfig.hookUrl,
+                    overrideUsername = "custom_yaba2"
+                )
+            )
+        )
+    }
 
     override suspend fun createLinkToken(
         userId: UserId,
