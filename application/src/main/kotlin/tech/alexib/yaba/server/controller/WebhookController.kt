@@ -91,7 +91,7 @@ class WebhookHandler(
             val startDate = webhookRequest.webhookCode.toLocalDate()
             when (webhookRequest.webhookCode) {
                 TransactionWebhookCode.HISTORICAL_UPDATE, TransactionWebhookCode.DEFAULT_UPDATE -> {
-                    transactionService.updateTransactions(
+                    transactionService.handleTransactionsWebhook(
                         PlaidItemId(webhookRequest.itemId),
                         startDate,
                         LocalDate.now(),

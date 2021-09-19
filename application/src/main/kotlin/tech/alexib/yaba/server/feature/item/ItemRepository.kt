@@ -21,9 +21,9 @@ import arrow.core.right
 import io.r2dbc.spi.ConnectionFactory
 import io.r2dbc.spi.Row
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.awaitSingle
@@ -41,6 +41,7 @@ import org.springframework.stereotype.Repository
 import tech.alexib.yaba.domain.institution.InstitutionId
 import tech.alexib.yaba.domain.item.ItemId
 import tech.alexib.yaba.domain.item.PlaidAccessToken
+import tech.alexib.yaba.domain.item.PlaidItemId
 import tech.alexib.yaba.domain.user.UserId
 import tech.alexib.yaba.server.util.serverError
 import java.util.UUID
@@ -53,20 +54,26 @@ interface ItemRepository {
     suspend fun findByAccessToken(accessToken: String): Either<ItemException.NotFound, ItemEntity>
     suspend fun findByInstitutionId(institutionId: String, userId: UserId): Either<ItemException.NotFound, ItemEntity>
     suspend fun findByPlaidId(id: String): Either<ItemException.NotFound, ItemEntity>
-    fun findByUserId(userId: UserId): Flow<ItemEntity>
+    fun findByUserId(userId: UserId, includeUnlinked: Boolean = true): Flow<ItemEntity>
     suspend fun updateStatus(id: UUID, status: String): ItemEntity
     suspend fun delete(id: UUID)
     suspend fun findByIds(ids: List<UUID>): List<ItemEntity>
     fun findAll(): Flow<ItemEntity>
     suspend fun unlink(itemId: ItemId, userId: UserId)
-    suspend fun relink(institutionId: InstitutionId, userId: UserId, plaidAccessToken: PlaidAccessToken): ItemEntity
+    suspend fun relink(
+        institutionId: InstitutionId,
+        userId: UserId,
+        plaidAccessToken: PlaidAccessToken,
+        plaidItemId: PlaidItemId,
+    ): ItemEntity
+
     suspend fun deleteByAccessToken(accessToken: String)
 }
 
 @Repository
 class ItemRepositoryImpl(
     private val connectionFactory: ConnectionFactory,
-    private val r2dbcConverter: R2dbcConverter
+    private val r2dbcConverter: R2dbcConverter,
 ) :
     ItemRepository {
     private val client: DatabaseClient by lazy { DatabaseClient.create(connectionFactory) }
@@ -97,7 +104,7 @@ class ItemRepositoryImpl(
 
     override suspend fun findByInstitutionId(
         institutionId: String,
-        userId: UserId
+        userId: UserId,
     ): Either<ItemException.NotFound, ItemEntity> {
         return template.selectOne(
             query(
@@ -118,8 +125,16 @@ class ItemRepositoryImpl(
             ?: ItemException.NotFound.left()
     }
 
-    override fun findByUserId(userId: UserId): Flow<ItemEntity> =
-        template.select(query(where("user_id").`is`(userId.value)), ItemEntity::class.java).asFlow()
+    override fun findByUserId(userId: UserId, includeUnlinked: Boolean): Flow<ItemEntity> {
+        logger.error { "findByUserId called with includeUnlinked: $includeUnlinked" }
+        val items = client.sql(
+            """
+    select * from items where user_id = :userId
+            """.trimIndent()
+        ).bind("userId", userId.value).map { row -> r2dbcConverter.read(ItemEntity::class.java, row) }.flow()
+
+        return if (!includeUnlinked) items.filter { it.linked } else items
+    }
 
     override suspend fun updateStatus(id: UUID, status: String): ItemEntity {
         return client.sql(
@@ -165,17 +180,25 @@ class ItemRepositoryImpl(
     override suspend fun relink(
         institutionId: InstitutionId,
         userId: UserId,
-        plaidAccessToken: PlaidAccessToken
+        plaidAccessToken: PlaidAccessToken,
+        plaidItemId: PlaidItemId,
     ): ItemEntity {
-        return client.sql(
-            """
-            update items set (linked,plaid_access_token) = (true,:accessToken)
+        return runCatching {
+            client.sql(
+                """
+            update items set (linked,plaid_access_token,plaid_item_id) = (true,:accessToken,:plaidItemId)
             where plaid_institution_id = :institutionId and user_id = :userId
             returning *
-            """.trimIndent()
-        ).bind("institutionId", institutionId.value).bind("userId", userId.value)
-            .bind("accessToken", plaidAccessToken.value).map(::mapEntity)
-            .flow().first()
+                """.trimIndent()
+            )
+                .bind("institutionId", institutionId.value)
+                .bind("userId", userId.value)
+                .bind("plaidItemId", plaidItemId.value)
+                .bind("accessToken", plaidAccessToken.value).map(::mapEntity).flow().first()
+        }.getOrElse {
+            logger.error { it.localizedMessage }
+            throw it
+        }
     }
 
     private fun mapEntity(row: Row): ItemEntity = r2dbcConverter.read(ItemEntity::class.java, row)

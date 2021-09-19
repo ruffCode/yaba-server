@@ -32,7 +32,12 @@ fun interface GetItemByInstitutionIdWithTimesUnlinked {
 }
 
 fun interface RelinkItem {
-    suspend operator fun invoke(institutionId: InstitutionId, userId: UserId, plaidAccessToken: PlaidAccessToken): Item
+    suspend operator fun invoke(
+        institutionId: InstitutionId,
+        userId: UserId,
+        plaidAccessToken: PlaidAccessToken,
+        plaidItemId: PlaidItemId,
+    ): Item
 }
 
 fun interface ValidateItemCreation {

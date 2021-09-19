@@ -52,7 +52,7 @@ class TransactionService(
     private val transactionUpdatesRepository: TransactionUpdatesRepository,
 ) {
 
-    suspend fun updateTransactions(
+    suspend fun handleTransactionsWebhook(
         plaidItemId: PlaidItemId,
         startDate: LocalDate,
         endDate: LocalDate,
@@ -125,13 +125,6 @@ class TransactionService(
         if (accountsNotHidden.isNotEmpty()) {
             handleUpdate(accessToken, startDate, endDate, plaidItemId, accountsNotHidden)
         }
-    }
-
-    suspend fun initial(plaidItemId: PlaidItemId) {
-        val startDate = LocalDate.now().minusDays(180)
-        val endDate = LocalDate.now()
-
-        updateTransactions(plaidItemId, startDate, endDate)
     }
 
     suspend fun initial(itemId: ItemId) {

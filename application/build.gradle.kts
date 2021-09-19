@@ -6,10 +6,12 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.spring") version "1.5.21"
     kotlin("kapt")
-//    id("org.springframework.experimental.aot") version "0.10.0-SNAPSHOT"
+//    id("org.springframework.experimental.aot") version "0.10.3"
     id("com.expediagroup.graphql") version "5.0.0-alpha.4"
     kotlin("plugin.serialization") version "1.5.21"
     id("com.github.johnrengelman.shadow") version "7.0.0"
+//    id("org.graalvm.buildtools.native") version "0.9.3"
+//    application
 }
 
 group = "tech.alexib"
@@ -41,10 +43,11 @@ dependencies {
     implementation("com.graphql-java:graphql-java-extended-scalars:17.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.2.1")
-    implementation("io.github.microutils:kotlin-logging:2.0.11")
+    implementation("io.github.microutils:kotlin-logging-jvm:2.0.11")
     implementation("io.r2dbc:r2dbc-pool")
+//    implementation("org.slf4j:slf4j-simple:1.7.29")
     implementation("io.r2dbc:r2dbc-postgresql")
-    implementation("org.postgresql:postgresql")
+    runtimeOnly("org.postgresql:postgresql")
     implementation("com.auth0:java-jwt:3.18.1")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("tech.alexib:plaid-kotlin:0.0.21")
@@ -67,6 +70,8 @@ dependencies {
     testImplementation("io.kotest:kotest-extensions-spring:4.4.3")
     testImplementation("com.ninja-squad:springmockk:3.0.1")
     testImplementation("app.cash.turbine:turbine:0.6.1")
+    testImplementation("io.r2dbc:r2dbc-postgresql")
+    testImplementation("org.postgresql:postgresql")
 }
 
 dependencyManagement {
@@ -89,6 +94,6 @@ graphql {
     }
 }
 
-tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
-    archiveBaseName.set("yaba-server")
-}
+// tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
+//    archiveBaseName.set("yaba-server")
+// }

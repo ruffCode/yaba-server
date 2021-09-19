@@ -19,7 +19,6 @@ import graphql.schema.DataFetcher
 import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
-import mu.KotlinLogging
 import org.springframework.stereotype.Component
 import tech.alexib.yaba.domain.user.UserId
 import tech.alexib.yaba.server.feature.account.AccountDto
@@ -40,21 +39,20 @@ class ItemDataLoader(private val repository: ItemRepository) : CoroutineDataLoad
 class ItemsByItemIdDataFetcher : DataFetcher<CompletableFuture<ItemDto>> {
     override fun get(environment: DataFetchingEnvironment): CompletableFuture<ItemDto> {
         val itemId = environment.getSource<AccountDto>().itemId
-
         return environment.getValueFromDataLoader(ItemDataLoader::class, itemId)
     }
 }
 
 @Component
 class ItemsByUserIdDataLoader(
-    private val itemRepository: ItemRepository
+    private val itemRepository: ItemRepository,
 ) : CoroutineDataLoader<UUID, List<ItemDto>>() {
     override suspend fun batchLoad(keys: List<UUID>): List<List<ItemDto>> {
-        return keys.map { uuid -> itemRepository.findByUserId(UserId(uuid)).map { it.toDto() }.toList() }
+        return keys.map { uuid ->
+            itemRepository.findByUserId(UserId(uuid), includeUnlinked = false).map { it.toDto() }.toList()
+        }
     }
 }
-
-private val logger = KotlinLogging.logger {}
 
 @Component
 class ItemsByUserIdDataFetcher : DataFetcher<CompletableFuture<List<ItemDto>>> {

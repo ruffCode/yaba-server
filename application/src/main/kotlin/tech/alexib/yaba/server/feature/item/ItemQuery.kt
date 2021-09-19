@@ -34,7 +34,7 @@ class ItemQuery(
     @Authenticated
     @GraphQLDescription("Returns all of user's items")
     suspend fun itemsByUser(context: YabaGraphQLContext): List<ItemDto> =
-        itemRepository.findByUserId(context.id()).map {
+        itemRepository.findByUserId(context.id(), false).map {
             it.toDto()
         }.toList()
 

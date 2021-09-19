@@ -23,6 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.future
 import org.dataloader.BatchLoaderEnvironment
 import org.dataloader.DataLoader
+import org.dataloader.DataLoaderFactory
 import org.dataloader.DataLoaderOptions
 import java.util.concurrent.CompletableFuture
 import kotlin.reflect.KClass
@@ -39,7 +40,7 @@ abstract class CoroutineDataLoader<K, V> : KotlinDataLoader<K, V> {
         fun <K, V> newDataLoader(
             batchLoader: CoroutineBatchLoader<K, V>,
         ): DataLoader<K, V> {
-            return DataLoader.newDataLoader { keys ->
+            return DataLoaderFactory.newDataLoader { keys ->
                 CoroutineScope(Dispatchers.Unconfined).future {
                     batchLoader(keys)
                 }
@@ -50,7 +51,7 @@ abstract class CoroutineDataLoader<K, V> : KotlinDataLoader<K, V> {
             batchLoader: CoroutineBatchLoader<K, V>,
             options: DataLoaderOptions,
         ): DataLoader<K, V> {
-            return DataLoader.newDataLoader(
+            return DataLoaderFactory.newDataLoader(
                 { keys ->
                     CoroutineScope(Dispatchers.Unconfined).future {
                         batchLoader(keys)

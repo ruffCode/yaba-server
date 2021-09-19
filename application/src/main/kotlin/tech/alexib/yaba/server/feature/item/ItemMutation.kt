@@ -15,11 +15,16 @@
  */
 package tech.alexib.yaba.server.feature.item
 
+import arrow.core.getOrHandle
 import com.expediagroup.graphql.server.operations.Mutation
+import mu.KotlinLogging
 import org.springframework.stereotype.Component
 import tech.alexib.plaid.client.model.ItemPublicTokenExchangeResponse
 import tech.alexib.yaba.domain.institution.InstitutionId
+import tech.alexib.yaba.domain.item.ItemCreateError
 import tech.alexib.yaba.domain.item.ItemId
+import tech.alexib.yaba.domain.item.LinkItemRequest
+import tech.alexib.yaba.domain.item.PublicToken
 import tech.alexib.yaba.domain.item.itemId
 import tech.alexib.yaba.server.feature.account.AccountEntity
 import tech.alexib.yaba.server.feature.account.AccountRepository
@@ -32,6 +37,8 @@ import tech.alexib.yaba.server.service.TransactionService
 import tech.alexib.yaba.server.util.YabaException
 import tech.alexib.yaba.server.util.toGraphql
 import java.util.UUID
+
+private val logger = KotlinLogging.logger {}
 
 @Component
 class ItemMutation(
@@ -47,74 +54,61 @@ class ItemMutation(
     @Authenticated
     suspend fun itemCreate(context: YabaGraphQLContext, input: ItemCreateInput): ItemCreateResponse {
         val userId = context.id()
-        itemRepository.findByInstitutionId(
-            input.institutionId,
-            userId
-        ).fold({
-        }, {
-            throw YabaException("You have already linked an item at this institution.").toGraphql()
-        })
-
         val plaidResponse: ItemPublicTokenExchangeResponse = plaidService.exchangeToken(input.publicToken)
 
-        val itemEntity = itemRepository.createItem(
-            ItemEntity(
-                id = UUID.randomUUID(),
-                userId = userId.value,
-                accessToken = plaidResponse.accessToken,
-                institutionId = input.institutionId,
-                plaidItemId = plaidResponse.itemId,
-                status = "good",
+        return itemService.linkItem(
+            LinkItemRequest(
+                PublicToken(input.publicToken),
+                userId = userId,
+                institutionId = InstitutionId(input.institutionId)
             )
-        ).fold({
-            throw YabaException("You have already linked an item at this institution.").toGraphql()
-        }, {
-            it
-        })
+        ).fold({ error: ItemCreateError ->
+            when (error) {
+                is ItemCreateError.PlaidApiError -> logger.error { "ItemCreateError ${error.message}" }
+                is ItemCreateError.ItemUnlinkedThreeTimesError ->
+                    logger.error { "ItemCreateError ItemUnlinkedThreeTimesError" }
+            }
+            throw YabaException("Unable to link institution").toGraphql()
+        }, { item ->
+            val accounts = plaidService.getAccountsForItem(plaidResponse.accessToken).fold({
+                throw it
+            }, {
+                it.map { account ->
+                    val newAccount = AccountEntity(
+                        itemId = item.id.value,
+                        plaidAccountId = account.accountId,
+                        name = account.name,
+                        mask = account.mask ?: "0000",
+                        officialName = account.officialName,
+                        currentBalance = account.balances.current,
+                        availableBalance = account.balances.available ?: 0.0,
+                        isoCurrencyCode = account.balances.isoCurrencyCode,
+                        unofficialCurrencyCode = account.balances.unofficialCurrencyCode,
+                        type = account.type.name,
+                        subtype = account.subtype?.name ?: "OTHER",
+                        hidden = false,
+                        id = UUID.randomUUID()
+                    )
+                    accountRepository.create(newAccount)
+                }
+            })
 
-        val institution = institutionService.getOrCreate(InstitutionId(itemEntity.institutionId)).fold(
-            {
+            val institution = institutionService.getOrCreate(InstitutionId(input.institutionId)).getOrHandle {
                 throw YabaException("Invalid institution id.").toGraphql()
-            },
-            {
-                it
             }
-        )
-        val accounts = plaidService.getAccountsForItem(itemEntity.accessToken).fold({
-            throw it
-        }, {
-            it.map { account ->
-                val newAccount = AccountEntity(
-                    itemId = itemEntity.id,
-                    plaidAccountId = account.accountId,
-                    name = account.name,
-                    mask = account.mask ?: "0000",
-                    officialName = account.officialName,
-                    currentBalance = account.balances.current,
-                    availableBalance = account.balances.available ?: 0.0,
-                    isoCurrencyCode = account.balances.isoCurrencyCode,
-                    unofficialCurrencyCode = account.balances.unofficialCurrencyCode,
-                    type = account.type.name,
-                    subtype = account.subtype?.name ?: "OTHER",
-                    hidden = false,
-                    id = UUID.randomUUID()
-                )
-                accountRepository.create(newAccount)
-            }
+            ItemCreateResponse(
+                name = institution.name,
+                itemId = item.id.value,
+                accounts = accounts.map {
+                    AccountInfo(
+                        plaidAccountId = it.plaidAccountId,
+                        name = it.name,
+                        mask = it.mask
+                    )
+                },
+                logo = institution.logo
+            )
         })
-
-        return ItemCreateResponse(
-            name = institution.name,
-            itemId = itemEntity.id,
-            accounts = accounts.map {
-                AccountInfo(
-                    plaidAccountId = it.plaidAccountId,
-                    name = it.name,
-                    mask = it.mask
-                )
-            },
-            logo = institution.logo
-        )
     }
 
     @Authenticated
@@ -129,15 +123,11 @@ class ItemMutation(
 
     @Authenticated
     suspend fun itemUnlink(context: YabaGraphQLContext, itemId: UUID): Boolean {
-        itemService.unlinkItem(itemId.itemId(), context.id())
-
-//        itemRepository.findById(itemId.itemId()).fold({
-//            notFound("Item not found for id $itemId")
-//        }, {
-//            plaidService.removeItem(it.accessToken)
-//        })
-//
-//        itemRepository.delete(itemId)
+        runCatching {
+            itemService.unlinkItem(itemId.itemId(), context.id())
+        }.getOrElse {
+            logger.error { "Error unlinking item $itemId" }
+        }
         return true
     }
 
@@ -146,8 +136,13 @@ class ItemMutation(
         plaidAccountIds.forEach {
             accountRepository.setHidden(it, true)
         }
-        transactionService.initial(ItemId(itemId))
-        return true
+        return runCatching {
+            transactionService.initial(ItemId(itemId))
+            true
+        }.getOrElse {
+            logger.error { "transactionService.initial error ${it.localizedMessage}" }
+            true
+        }
     }
 }
 

@@ -1,7 +1,8 @@
 pluginManagement {
     repositories {
-        maven { url = uri("https://repo.spring.io/snapshot") }
-        maven { url = uri("https://repo.spring.io/milestone") }
+//        maven { url = uri("https://repo.spring.io/snapshot") }
+//        maven { url = uri("https://repo.spring.io/milestone") }
+        maven { url = uri("https://repo.spring.io/release") }
         gradlePluginPortal()
         mavenCentral()
     }
@@ -20,9 +21,10 @@ gradleEnterprise {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        maven { url = uri("https://repo.spring.io/snapshot") }
+        maven { url = uri("https://repo.spring.io/release") }
+//        maven { url = uri("https://repo.spring.io/snapshot") }
         mavenCentral()
-        maven { url = uri("https://repo.spring.io/milestone") }
+//        maven { url = uri("https://repo.spring.io/milestone") }
     }
 }
 

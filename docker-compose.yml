@@ -11,35 +11,35 @@ networks:
 
 
 services:
-  postgresql:
-    image: docker.io/bitnami/postgresql:13
-    container_name: postgres
-    volumes:
-      - postgresql_data:/bitnami/postgresql
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-    environment:
-      PUID: ${PUID:-1000}
-      PGID: ${PGID:-998}
-      TZ: ${TZ:-America/New_York}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB:-yaba}
-      POSTGRES_USER: ${POSTGRES_USER:-yaba}
-      APP_SECRET: ${APP_SECRET}
-    restart: always
-    logging:
-      options:
-        max-size: "50m"
-    networks:
-      pg:
-        ipv4_address: 192.168.222.251
-    ports:
-      - "5435:5432"
-    security_opt:
-      - no-new-privileges:true
+#  postgresql:
+#    image: docker.io/bitnami/postgresql:13
+#    container_name: postgres
+#    volumes:
+#      - postgresql_data:/bitnami/postgresql
+#      - /etc/timezone:/etc/timezone:ro
+#      - /etc/localtime:/etc/localtime:ro
+#    environment:
+#      PUID: ${PUID:-1000}
+#      PGID: ${PGID:-998}
+#      TZ: ${TZ:-America/New_York}
+#      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+#      POSTGRES_DB: ${POSTGRES_DB:-yaba}
+#      POSTGRES_USER: ${POSTGRES_USER:-yaba}
+#      APP_SECRET: ${APP_SECRET}
+#    restart: always
+#    logging:
+#      options:
+#        max-size: "50m"
+#    networks:
+#      pg:
+#        ipv4_address: 192.168.222.251
+#    ports:
+#      - "5435:5432"
+#    security_opt:
+#      - no-new-privileges:true
   yaba-server:
     container_name: yabaServer
-    image: yaba-server:0.1.14-SNAPSHOT
+    image: yaba-server:0.1.16-SNAPSHOT
     network_mode: host
     security_opt:
       - no-new-privileges:true
@@ -55,13 +55,14 @@ services:
       PLAID_BASE_URL: ${PLAID_BASE_URL}
       WEBHOOK_URL: ${WEBHOOK_URL}
       APP_SECRET: ${APP_SECRET}
+      SPRING_PROFILES_ACTIVE: prod
     logging:
       options:
         max-size: "50m"
 
-volumes:
-  postgresql_data:
-    driver: local
+#volumes:
+#  postgresql_data:
+#    driver: local
 
 #networks:
 #  pg:

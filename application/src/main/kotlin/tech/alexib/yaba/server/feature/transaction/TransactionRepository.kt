@@ -17,10 +17,9 @@ package tech.alexib.yaba.server.feature.transaction
 
 import io.r2dbc.spi.ConnectionFactory
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.reactive.asFlow
 import mu.KotlinLogging
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.data.r2dbc.convert.R2dbcConverter
@@ -31,9 +30,11 @@ import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.await
 import org.springframework.r2dbc.core.flow
 import org.springframework.stereotype.Repository
+import reactor.core.publisher.Flux
 import tech.alexib.yaba.domain.item.ItemId
 import tech.alexib.yaba.domain.user.UserId
 import tech.alexib.yaba.server.feature.account.AccountId
+import tech.alexib.yaba.server.util.bind
 import java.time.LocalDate
 import java.util.UUID
 
@@ -57,17 +58,56 @@ private val logger = KotlinLogging.logger { }
 @Repository
 class TransactionRepositoryImpl(
     private val connectionFactory: ConnectionFactory,
-    private val r2dbcConverter: R2dbcConverter
+    private val r2dbcConverter: R2dbcConverter,
 ) : TransactionRepository {
 
     private val client: DatabaseClient by lazy { DatabaseClient.create(connectionFactory) }
     private val template: R2dbcEntityTemplate by lazy { R2dbcEntityTemplate(connectionFactory) }
 
-    override fun create(transactions: List<TransactionTableEntity>): Flow<TransactionTableEntity> {
-        return transactions.asFlow().map { create(it) }
-    }
+    override fun create(transactions: List<TransactionTableEntity>): Flow<TransactionTableEntity> =
+        client.inConnectionMany { connection ->
+            val statement = connection.createStatement(
+                """
+                insert into transactions_table (account_id, plaid_transaction_id, plaid_category_id, category,
+            subcategory, type,  amount, iso_currency_code, unofficial_currency_code, date, pending, account_owner,
+            merchant_name, category_id,name) values ($1, $2, $3 ,$4, $5, $6, $7, $8, $9 ,$10, $11, $12, $13, $14,$15)
+             returning *
+                """.trimIndent()
+            )
+
+            transactions.forEach { transaction ->
+                statement.apply {
+                    with(transaction) {
+                        bind(0, accountId)
+                        bind(1, plaidTransactionId)
+                        bind(2, plaidCategoryId)
+                        bind(3, category)
+                        bind(4, subcategory)
+                        bind(5, type)
+                        bind(6, amount)
+                        bind(7, isoCurrencyCode)
+                        bind(8, unofficialCurrencyCode)
+                        bind(9, date)
+                        bind(10, pending)
+                        bind(11, accountOwner)
+                        bind(12, merchantName)
+                        bind(13, plaidCategoryId?.toIntOrNull(), Int::class.java)
+                        bind(14, name)
+                    }.add()
+                }
+            }
+            Flux.from(statement.execute()).flatMap {
+                it.map { row, _ ->
+                    r2dbcConverter.read(
+                        TransactionTableEntity::class.java,
+                        row
+                    )
+                }
+            }
+        }.asFlow()
 
     override suspend fun create(transaction: TransactionTableEntity): TransactionTableEntity {
+
         return try {
             template.insert<TransactionTableEntity>().into("transactions_table").usingAndAwait(transaction)
         } catch (e: Throwable) {
@@ -165,11 +205,17 @@ class TransactionRepositoryImpl(
     }
 
     override suspend fun deleteTransactions(itemId: ItemId) {
+        val itemTransactionIds = client.sql(
+            """
+            select id from transactions where item_id = :itemId
+            """.trimIndent()
+        ).bind("itemId", itemId.value).map { row -> row["id"] as UUID }.flow().toList()
+        logger.error { "transactionIds $itemTransactionIds" }
         client.sql(
             """
-            delete from transactions where item_id = :itemId
+            delete from transactions_table where id in (:ids)
             """.trimIndent()
-        ).bind("itemId", itemId.value).await()
+        ).bind("ids", itemTransactionIds).await()
     }
 
     override fun findByPlaidIds(plaidIds: List<String>): Flow<UUID> {

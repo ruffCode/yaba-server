@@ -4,7 +4,7 @@ build/
 */.gradle
 gradle/wrapper/gradle-wrapper.jar
 .env
-
+Makefile
 
 flyway.conf
 azureDeploy.sh

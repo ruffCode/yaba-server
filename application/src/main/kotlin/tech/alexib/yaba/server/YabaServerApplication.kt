@@ -16,17 +16,14 @@
 package tech.alexib.yaba.server
 
 import com.expediagroup.graphql.generator.directives.KotlinDirectiveWiringFactory
+import com.expediagroup.graphql.generator.execution.SimpleKotlinDataFetcherFactoryProvider
+import com.expediagroup.graphql.generator.hooks.SchemaGeneratorHooks
 import com.expediagroup.graphql.server.spring.subscriptions.ApolloSubscriptionHooks
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
-import graphql.GraphQLError
-import graphql.GraphqlErrorException
 import graphql.execution.DataFetcherExceptionHandler
-import graphql.execution.DataFetcherExceptionHandlerParameters
-import graphql.execution.DataFetcherExceptionHandlerResult
-import mu.KotlinLogging
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.http.HttpMessageConverters
 import org.springframework.boot.runApplication
@@ -40,7 +37,6 @@ import tech.alexib.yaba.server.graphql.MySubscriptionHooks
 import tech.alexib.yaba.server.graphql.dataloader.CustomKotlinDataFetcherFactoryProvider
 import tech.alexib.yaba.server.graphql.schema.CustomDirectiveWiringFactory
 import tech.alexib.yaba.server.graphql.schema.CustomSchemaGeneratorHooks
-import tech.alexib.yaba.server.util.YabaException
 
 @SpringBootApplication
 class YabaServerApplication {
@@ -53,13 +49,14 @@ class YabaServerApplication {
     fun dataFetcherExceptionHandler(): DataFetcherExceptionHandler = CustomDataFetcherExceptionHandler()
 
     @Bean
-    fun wiringFactory() = CustomDirectiveWiringFactory()
+    fun wiringFactory(): KotlinDirectiveWiringFactory = CustomDirectiveWiringFactory()
 
     @Bean
-    fun hooks(wiringFactory: KotlinDirectiveWiringFactory) = CustomSchemaGeneratorHooks(wiringFactory)
+    fun hooks(wiringFactory: KotlinDirectiveWiringFactory):
+        SchemaGeneratorHooks = CustomSchemaGeneratorHooks(wiringFactory)
 
     @Bean
-    fun kotlinDataFetcherFactoryProvider(objectMapper: ObjectMapper) =
+    fun kotlinDataFetcherFactoryProvider(objectMapper: ObjectMapper): SimpleKotlinDataFetcherFactoryProvider =
         CustomKotlinDataFetcherFactoryProvider(objectMapper)
 
     @Bean
@@ -85,41 +82,4 @@ class FirebaseConfig(
 
 fun main(args: Array<String>) {
     runApplication<YabaServerApplication>(*args)
-}
-
-private val logger = KotlinLogging.logger {}
-
-class CustomDataFetcherExceptionHandler : DataFetcherExceptionHandler {
-
-    override fun onException(handlerParameters: DataFetcherExceptionHandlerParameters):
-        DataFetcherExceptionHandlerResult {
-        val exception = handlerParameters.exception
-        val sourceLocation = handlerParameters.sourceLocation
-        val path = handlerParameters.path
-
-        val error: GraphQLError = when (exception) {
-            is YabaException -> GraphqlErrorException.newErrorException()
-                .cause(exception)
-                .message(exception.message ?: "UNKNOWN ERROR")
-                .sourceLocation(sourceLocation)
-                .path(path.toList())
-                .build()
-            else ->
-                GraphqlErrorException.newErrorException()
-                    .cause(exception)
-                    .message(exception.message)
-                    .sourceLocation(sourceLocation)
-                    .path(path.toList())
-                    .build()
-        }
-
-//        val error = GraphqlErrorException.newErrorException()
-//            .cause(exception)
-//            .message(exception.message)
-//            .sourceLocation(sourceLocation)
-//            .path(path.toList())
-//            .build()
-        logger.warn(error.message, exception)
-        return DataFetcherExceptionHandlerResult.newResult().error(error).build()
-    }
 }

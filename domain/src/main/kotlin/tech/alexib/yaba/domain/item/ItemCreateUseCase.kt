@@ -42,14 +42,19 @@ suspend inline fun LinkItemRequest.create(
     exchangePublicToken: ExchangePublicToken,
     createItem: CreateItem,
     relinkItem: RelinkItem,
-    validateItemCreation: ValidateItemCreation
+    validateItemCreation: ValidateItemCreation,
 ): Either<ItemCreateError, Item> {
     val cmd = LinkItemCommand(this)
     return either {
         validateItemCreation(cmd).map { valid ->
             exchangePublicToken(valid.publicToken).flatMap { plaidResponse ->
                 if (valid.relink) {
-                    relinkItem(valid.institutionId, valid.userId, plaidResponse.accessToken).right()
+                    relinkItem(
+                        valid.institutionId,
+                        valid.userId,
+                        plaidResponse.accessToken,
+                        plaidResponse.itemId
+                    ).right()
                 } else {
                     val item = Item(
                         id = UUID.randomUUID().itemId(),

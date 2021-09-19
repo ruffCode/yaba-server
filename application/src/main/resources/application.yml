@@ -11,29 +11,28 @@ spring:
       max-life-time: 5
   application:
     name: YABA
-#  profiles:
-#    active: test
+
 
 logging.level:
   org.springframework.r2dbc: debug
   org.springframework.data.r2dbc: debug
-  web: warn
+  web: debug
 
 db:
   username: ${POSTGRES_USER:yaba}
   password: ${POSTGRES_PASSWORD:yaba}
-  url: postgresql://${POSTGRES_HOST}:${POSTGRES_PORT:5432}/${POSTGRES_DB}
+  url: postgresql://${POSTGRES_HOST:192.168.251.251}:${POSTGRES_PORT:5432}/${POSTGRES_DB:yaba}
 server:
   port: ${SERVER_PORT:9050}
 
 plaid:
-  client-id: ${PLAID_CLIENT_ID}
-  secret: ${PLAID_SECRET}
-  base-url: ${PLAID_BASE_URL}
-  hook-url: ${WEBHOOK_URL}
+  client-id: ${PLAID_CLIENT_ID:random}
+  secret: ${PLAID_SECRET:random}
+  base-url: ${PLAID_BASE_URL:https://sandbox.plaid.com}
+  hook-url: ${WEBHOOK_URL:https://ruffrevival.ngrok.io/hook}
 
 app:
-  secret: ${APP_SECRET}
+  secret: ${APP_SECRET:thisissupersecret}
   refresh: letsrefresh
 graphql:
   packages:

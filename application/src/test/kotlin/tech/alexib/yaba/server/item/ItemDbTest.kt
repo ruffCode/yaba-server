@@ -22,6 +22,7 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.MethodOrderer
+import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestMethodOrder
@@ -32,6 +33,7 @@ import org.springframework.r2dbc.core.await
 import tech.alexib.yaba.domain.institution.InstitutionId
 import tech.alexib.yaba.domain.item.ItemId
 import tech.alexib.yaba.domain.item.PlaidAccessToken
+import tech.alexib.yaba.domain.item.PlaidItemId
 import tech.alexib.yaba.domain.item.itemId
 import tech.alexib.yaba.server.assertIsError
 import tech.alexib.yaba.server.assertIsOk
@@ -79,6 +81,7 @@ class ItemDbTest : BaseIntegrationTest() {
     }
 
     @Test
+    @Order(1)
     fun `does not insert duplicate`() {
         runBlocking {
             assertIsError(itemRepository.createItem(itemStub), ItemException.Duplicate)
@@ -86,6 +89,7 @@ class ItemDbTest : BaseIntegrationTest() {
     }
 
     @Test
+    @Order(2)
     fun `find item by id`() {
         runBlocking {
             assertIsOk(itemRepository.findById(ItemId(itemStub.id)))
@@ -93,6 +97,7 @@ class ItemDbTest : BaseIntegrationTest() {
     }
 
     @Test
+    @Order(3)
     fun `find items by userId`() {
         runBlocking {
             itemRepository.findByUserId(usersStub.first().id).toList().let {
@@ -102,6 +107,7 @@ class ItemDbTest : BaseIntegrationTest() {
     }
 
     @Test
+    @Order(4)
     fun `find item by accessToken`() {
         runBlocking {
             assertIsOk(itemRepository.findByAccessToken(itemStub.accessToken))
@@ -109,6 +115,7 @@ class ItemDbTest : BaseIntegrationTest() {
     }
 
     @Test
+    @Order(5)
     fun `find item by institution id`() {
         runBlocking {
             assertIsOk(itemRepository.findByInstitutionId(itemStub.institutionId, usersStub.first().id))
@@ -116,6 +123,7 @@ class ItemDbTest : BaseIntegrationTest() {
     }
 
     @Test
+    @Order(6)
     fun `find item by plaid id`() {
         runBlocking {
             assertIsOk(itemRepository.findByPlaidId(itemStub.plaidItemId))
@@ -123,6 +131,7 @@ class ItemDbTest : BaseIntegrationTest() {
     }
 
     @Test
+    @Order(7)
     fun `update item status`() {
         assertDoesNotThrow {
             runBlocking {
@@ -130,7 +139,7 @@ class ItemDbTest : BaseIntegrationTest() {
             }
         }
     }
-
+    @Order(8)
     @Test
     fun `unlinked count is incremented`() {
         runBlocking {
@@ -139,7 +148,8 @@ class ItemDbTest : BaseIntegrationTest() {
             val updated2 = itemRepository.relink(
                 InstitutionId(itemStub.institutionId),
                 usersStub.first().id,
-                PlaidAccessToken("access")
+                PlaidAccessToken("access"),
+                PlaidItemId("itemId")
             )
             Assertions.assertEquals(1, updated2.timesUnlinked)
             Assertions.assertTrue(updated2.linked)

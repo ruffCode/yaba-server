@@ -115,7 +115,7 @@ class PlaidServiceImpl(private val plaidConfig: PlaidConfig) : PlaidService {
             user = LinkTokenCreateRequestUser(
                 clientUserId = userId.value.toString()
             ),
-            products = listOf(Products.TRANSACTIONS, Products.AUTH),
+            products = listOf(Products.AUTH),
             accessToken = accessToken,
             webhook = plaidConfig.hookUrl
         )
@@ -220,6 +220,7 @@ class PlaidServiceImpl(private val plaidConfig: PlaidConfig) : PlaidService {
         }
     }
 
+    @Suppress("NestedBlockDepth")
     override suspend fun fetchTransactions(
         accessToken: String,
         startDate: LocalDate,
@@ -237,7 +238,7 @@ class PlaidServiceImpl(private val plaidConfig: PlaidConfig) : PlaidService {
             endDate = endDate.toKotlinLocalDate(),
             options = options
         )
-
+        var retry = 0
         return try {
             fetchTransactions(request, 100, 0)
         } catch (e: PlaidError) {
@@ -245,15 +246,22 @@ class PlaidServiceImpl(private val plaidConfig: PlaidConfig) : PlaidService {
                 PlaidError.ErrorType.ITEM_ERROR -> {
                     if (e.errorCode == "PRODUCT_NOT_READY") {
                         logger.error { "PRODUCT NOT READY" }
-                        delay(300)
-                        fetchTransactions(request, 100, 0)
+//                        throw e
+                        retry += 1
+                        if (retry < 2) {
+                            logger.error { "PRODUCT NOT READY $retry waiting" }
+                            delay(3000)
+                            logger.error { "PRODUCT NOT READY $retry done waiting" }
+                            fetchTransactions(request, 100, 0)
+                        } else throw e
                     } else {
-                        logger.error { e.errorMessage }
+                        logger.error { "ITEM_ERROR ${e.localizedMessage}" }
                         throw e
                     }
                 }
+
                 else -> {
-                    logger.error { e.errorMessage }
+                    logger.error { e.localizedMessage }
                     throw e
                 }
             }

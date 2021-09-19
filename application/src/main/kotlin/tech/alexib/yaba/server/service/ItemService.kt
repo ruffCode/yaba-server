@@ -37,7 +37,6 @@ import tech.alexib.yaba.domain.user.UserId
 import tech.alexib.yaba.server.feature.account.AccountRepository
 import tech.alexib.yaba.server.feature.item.ItemRepository
 import tech.alexib.yaba.server.feature.item.toEntity
-import tech.alexib.yaba.server.feature.transaction.TransactionRepository
 import tech.alexib.yaba.server.plaid.PlaidService
 
 interface ItemService {
@@ -53,7 +52,6 @@ class ItemServiceImpl(
     private val institutionService: InstitutionService,
     private val itemRepository: ItemRepository,
     private val accountRepository: AccountRepository,
-    private val transactionRepository: TransactionRepository,
 ) : ItemService {
 
     override suspend fun linkItem(linkItemRequest: LinkItemRequest): Either<ItemCreateError, Item> {
@@ -66,9 +64,6 @@ class ItemServiceImpl(
                 getItemByInstitutionIdWithTimesUnlinked = ::getItemByInstitutionIdWithTimesUnlinked,
             )
         }
-        institutionService.getOrCreate(linkItemRequest.institutionId).mapLeft {
-            logger.error { it }
-        }
         return createResult
     }
 
@@ -76,14 +71,18 @@ class ItemServiceImpl(
         itemRepository.unlink(itemId, userId)
 
         itemRepository.findById(itemId).map { itemEntity ->
-            transactionRepository.deleteTransactions(itemId)
             accountRepository.deleteByItemId(itemId)
             plaidService.removeItem(itemEntity.accessToken)
         }
     }
 
-    private suspend fun relink(institutionId: InstitutionId, userId: UserId, plaidAccessToken: PlaidAccessToken): Item =
-        itemRepository.relink(institutionId, userId, plaidAccessToken).toDomain()
+    private suspend fun relink(
+        institutionId: InstitutionId,
+        userId: UserId,
+        plaidAccessToken: PlaidAccessToken,
+        plaidItemId: PlaidItemId,
+    ): Item =
+        itemRepository.relink(institutionId, userId, plaidAccessToken, plaidItemId).toDomain()
 
     private suspend fun exchangePublicToken(publicToken: PublicToken):
         Either<PlaidApiError, PublicTokenExchangeResponse> {

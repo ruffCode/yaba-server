@@ -16,6 +16,7 @@
 package tech.alexib.yaba.server.util
 
 import io.r2dbc.spi.Row
+import io.r2dbc.spi.Statement
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
@@ -50,6 +51,7 @@ inline fun <reified T> R2dbcConverter.read(row: Row, prefix: String): T? =
             override fun <T : Any?> get(name: String, type: Class<T>): T? = row["$prefix$name", type]
         }
     )
+
 fun <T> withTransaction(transactionManager: R2dbcTransactionManager, block: suspend CoroutineScope.() -> T?): Mono<T> {
     val operator = TransactionalOperator.create(transactionManager)
     val result = mono(block = block)
@@ -64,8 +66,14 @@ fun <T : Any> withTransaction(transactionManager: R2dbcTransactionManager, flow:
 
 suspend fun <T> withTransactionOnCoroutine(
     transactionManager: R2dbcTransactionManager,
-    block: suspend CoroutineScope.() -> T?
+    block: suspend CoroutineScope.() -> T?,
 ): T = withTransaction(transactionManager, block).awaitSingle()
 
 suspend fun <T : Any> withTransactionOnCoroutine(transactionManager: R2dbcTransactionManager, flow: Flow<T>): Flow<T> =
     withTransaction(transactionManager, flow).asFlow()
+
+fun Statement.bind(
+    index: Int,
+    value: Any?,
+    clazz: Class<*> = String::class.java,
+): Statement = if (value != null) bind(index, value) else bindNull(index, clazz)
