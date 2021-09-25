@@ -18,7 +18,6 @@ package tech.alexib.yaba.server.service
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
-import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import tech.alexib.plaid.client.model.PlaidError
 import tech.alexib.yaba.domain.institution.InstitutionId
@@ -44,12 +43,9 @@ interface ItemService {
     suspend fun unlinkItem(itemId: ItemId, userId: UserId)
 }
 
-private val logger = KotlinLogging.logger {}
-
 @Service
 class ItemServiceImpl(
     private val plaidService: PlaidService,
-    private val institutionService: InstitutionService,
     private val itemRepository: ItemRepository,
     private val accountRepository: AccountRepository,
 ) : ItemService {

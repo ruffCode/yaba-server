@@ -11,7 +11,6 @@ plugins {
     kotlin("plugin.serialization") version "1.5.21"
     id("com.github.johnrengelman.shadow") version "7.0.0"
 //    id("org.graalvm.buildtools.native") version "0.9.3"
-//    application
 }
 
 group = "tech.alexib"
@@ -51,7 +50,7 @@ dependencies {
     implementation("com.auth0:java-jwt:3.18.1")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("tech.alexib:plaid-kotlin:0.0.21")
-    implementation("io.sentry:sentry-spring-boot-starter:5.1.2")
+    implementation("io.sentry:sentry-spring-boot-starter:5.2.0")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     kapt("org.springframework.boot:spring-boot-configuration-processor")
     implementation("com.google.firebase:firebase-admin:8.0.1")
