@@ -1,4 +1,4 @@
-FROM alpine:3.9
+FROM alpine:3.13.9
 
 RUN set -x && \
     apk add --no-cache -t .deps ca-certificates && \
